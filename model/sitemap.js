@@ -9,8 +9,7 @@ const SiteMapSchema = new mongoose.Schema(
         lastmod:{type:Date,required:true},
         created_at: { type: Date, required: false, default: Date.now() },
         updated_at: { type: Date, required: false }
-    },
-    { timestamps: true }
+    }
 );
 
 module.exports = SiteMap = mongoose.model("SiteMap", SiteMapSchema);

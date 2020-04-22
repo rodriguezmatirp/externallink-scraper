@@ -17,6 +17,7 @@ module.exports.algo1 = async (req) => {
 
 
     if (find.length > 0) {
+
         var count = find.length;
         console.log("here comnes");
 
@@ -84,10 +85,10 @@ module.exports.algo1 = async (req) => {
 
     // end of insertion of site map//
 
-  
+    ////////////////////////////////////////////////////////////////////////////////////////
 
 
-    find = await sitemapSchema.find({ status: 1 });
+    find = await sitemapSchema.find({ status: 1, parent_link: req.body.url });
     resp = await new Promise(async (resolve, reject) => {
         var i = 0;
         console.log(find);
@@ -96,7 +97,7 @@ module.exports.algo1 = async (req) => {
             const doc = await articleSchema.find({ parent_link: find[i].link })
             if (doc.length == 0) {
                 var url = find[i].link;
-                console.log(url);
+                console.log("sitemap getting scratched  :-  " + url);
 
                 const html = await fetchPage(url, 6);
 
@@ -104,7 +105,7 @@ module.exports.algo1 = async (req) => {
 
                     parser.parseString(html, async function (err, result) {
 
-                        const doc = await algo1insertArticle(result, req.body.url, url, result['urlset']['url'].length)
+                        const doc = await algo1insertArticle(result, req.body.url, url, result['urlset']['url'].length, req)
                         if (doc) {
                             const update = await sitemapSchema.findOneAndUpdate({ link: url }, { status: 0 });
                             if (update) {
@@ -128,7 +129,43 @@ module.exports.algo1 = async (req) => {
 
             }
             else {
-                console.log("nothing");
+                var url = find[i].link;
+
+                var count = doc.length;
+                console.log("parent link scrateched:-" + find[i].link);
+
+                const html = await fetchPage(url, 6);
+                let response = await new Promise((resolve, reject) => {
+                    parser.parseString(html, async function (err, result) {
+                        if (result['urlset']['url'].length > count) {
+                            console.log("Updated Data Found!");
+
+                            const doc = await algo1insertArticle(result, req.body.url, url, result['urlset']['url'].length - count, req);
+                            if (doc) {
+                                const update = await sitemapSchema.findOneAndUpdate({ link: url }, { status: 0 });
+                                if (update) {
+                                    console.log("updated " + url + update);
+
+                                    message = "data Updated artile datasets"
+                                    resolve(true)
+                                }
+                            }
+                            else {
+                                message = "Error in backend Please check 500"
+                                resolve(false)
+                            }
+
+                        }
+                        console.log("No Updates articles Found!");
+
+                        message = "No updated data Found!"
+                        resolve(true)
+                    })
+                });
+                if (response == false) {
+                    message = "Error in backend Please check 500"
+                    resolve(false)
+                }
 
             }
         }
@@ -206,19 +243,30 @@ var checkupdates = async (result, length) => {
     }
 }
 
-var htmlParser = async (html) => {
+var htmlParser = async (html, filter) => {
     var arr = []
     var $ = cheerio.load(html);
     $('a').filter(function () {
         var data = $(this);
         let title = data.attr('href');
         rel = data.attr('rel')
-        if (title.charAt(0) != '/' && title.indexOf('yourstory') == -1 && title.indexOf('YourStory') == -1
-            && title.indexOf('share.hsforms.com') == -1) {
-            if (rel == "dofollow")
-                arr.push({ rel: rel, link: title })
-            else
-                arr.push({ rel: "nofollow", link: title })
+        if (rel == "dofollow") {
+            arr.push({ rel: rel, link: title })
+        }
+        else {
+            if (title != undefined) {
+                let upper = title.toUpperCase();
+                let filterTitle = filter.toUpperCase()
+                console.log("title: -" + title);
+
+                if (title.charAt(0) != '/' && upper.indexOf(filterTitle) == -1 && title.indexOf('share.hsforms.com') == -1
+                    && title.indexOf('javascript:void') == -1) {
+                    if (rel == "dofollow")
+                        arr.push({ rel: rel, link: title })
+                    else
+                        arr.push({ rel: "nofollow", link: title })
+                }
+            }
         }
 
     });
@@ -230,16 +278,22 @@ var htmlParser = async (html) => {
 
 }
 
-const algo1insertArticle = async (result, main_url, url, length) => {
+const algo1insertArticle = async (result, main_url, url, length, req) => {
     try {
         var links = result['urlset']['url'];
+        console.log("no of articles to be scratched:- " + length);
+
         var i = 0;
         var counter = 0
         var arr = []
         for (i = 0; i < length; i++) {
+            console.log("link getting sctrached:- " + result['urlset']['url'][i].loc[0]);
+
             arr.push({ "link": (result['urlset']['url'][i].loc[0]), "page": i + 1 });
-            const html = await fetchPage(result['urlset']['url'][i].loc[0], 6); 4
-            const external = await htmlParser(html);
+            const html = await fetchPage(result['urlset']['url'][i].loc[0], 6);
+            var filterTitle = await TitleSplitter(req.body.url);
+
+            const external = await htmlParser(html, filterTitle);
             const articlemap = new articleSchema({
                 main_link: main_url,
                 parent_link: url,
@@ -260,6 +314,8 @@ const algo1insertArticle = async (result, main_url, url, length) => {
 
         }
     } catch (err) {
+        console.log(err);
+
         return (false)
     }
 }
@@ -309,6 +365,14 @@ const fetchPage = async (url, n) => {
         return await fetchPage(url, n - 1);
     }
 };
+
+var TitleSplitter = async (url) => {
+    var split1 = url.split("//");
+    var split2 = split1[1].split('.');
+    console.log("title filter:-" + split2[0]);
+
+    return (split2[0]);
+}
 
 
 

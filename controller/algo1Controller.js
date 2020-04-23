@@ -19,17 +19,17 @@ module.exports.algo1 = async (req) => {
     if (find.length > 0) {
 
         var count = find.length;
-        console.log("here comnes");
+        console.log("Tables present in database");
 
         response = await new Promise((resolve, reject) => {
-            console.log("here comnes12");
-            console.log(html);
+            console.log("here comes 1");
+            // console.log(html);
 
             parser.parseString(html, async function (err, result) {
-                console.log("here comnes12");
+                console.log("here comnes2");
 
                 if (result['sitemapindex']['sitemap'].length > count) {
-                    console.log("here comnes12");
+                    console.log("Site Map Counter Greater than the database count!");
                     const doc = await algo1insertSiteMap(result, url, result['sitemapindex']['sitemap'].length - count)
                     if (doc) {
                         message = "New articles updated on sitemap!!"
@@ -41,7 +41,8 @@ module.exports.algo1 = async (req) => {
                     }
                 }
                 else {
-                    console.log("here comnes123");
+                    console.log("Checking for Updates");
+
 
                     const doc = await checkupdates(result, result['sitemapindex']['sitemap'].length);
                     console.log("checkupdates log", doc);
@@ -231,7 +232,9 @@ var checkupdates = async (result, length) => {
 
             }
             else {
-                sitemapSchema.findOneAndUpdate({ link: url }, { status: 1 });
+                const res = await sitemapSchema.findOneAndUpdate({ link: url }, { status: 1, lastmod: lastmod });
+                console.log(res);
+
             }
         }
         return (true)

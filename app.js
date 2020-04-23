@@ -11,7 +11,8 @@ var indexRouter = require('./routes/index');
 var app = express();
 db = async () => {
   try {
-    const con = await mongoose.connect('mongodb://localhost:27017/scrapper', { useNewUrlParser: true });
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/scrapper'
+    const con = await mongoose.connect(mongoUri, { useNewUrlParser: true });
     if (con) {
       console.log("Connected Successfull !");
 

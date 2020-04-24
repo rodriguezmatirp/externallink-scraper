@@ -19,6 +19,7 @@ module.exports.getByDate = async (link, start, end) => {
     try {
         start = new Date(start);
         end = new Date(end)
+        end = await incrementDate(end, 1)
         console.log(start);
         console.log(end);
         let doc = "";
@@ -48,4 +49,10 @@ module.exports.getByDate = async (link, start, end) => {
     catch (err) {
         return ({ status: false, result: null, err: err });
     }
+}
+
+incrementDate = async (dateInput, increment) => {
+    var dateFormatTotime = new Date(dateInput);
+    var increasedDate = new Date(dateFormatTotime.getTime() + (increment * 86400000));
+    return increasedDate;
 }

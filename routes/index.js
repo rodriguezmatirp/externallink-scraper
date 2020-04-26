@@ -37,14 +37,34 @@ router.get('/get/algo1', async (req, res, next) => {
 
 
   const response = await getController.get(link, skip, limit)
-  
+
   if (response.err == null) {
-    res.status(200).json({doc:response});
+    res.status(200).json({ doc: response });
   }
   else {
     res.status(400).json(response);
   }
 });
+
+router.get('/get/Date', async (req, res, next) => {
+  console.log(req.query.site);
+  var link = req.query.site;
+  var start = req.query.start;
+  var end = req.query.end;
+  console.log(start);
+  console.log(end);
+
+  const response = await getController.getByDate(link, start, end)
+
+  if (response.err == null) {
+    res.status(200).json({ doc: response });
+  }
+  else {
+    res.status(400).json(response);
+  }
+});
+
+
 
 router.get('/algo2', async (req, res, next) => {
   res.render('index', { title: 'Express' });

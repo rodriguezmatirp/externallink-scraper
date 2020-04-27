@@ -7,8 +7,7 @@ const MasterSchema = new mongoose.Schema(
         algo: { type: String, required: true },
         created_at: { type: Date, required: false, default: Date.now() },
         updated_at: { type: Date, required: false }
-    },
-    { timestamps: true }
+    }
 );
 
 module.exports = Masters = mongoose.model("masters", MasterSchema);

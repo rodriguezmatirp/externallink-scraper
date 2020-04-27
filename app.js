@@ -12,8 +12,7 @@ var userController = require("./routes/user");
 var app = express();
 db = async () => {
   try {
-    const mongoUri =
-      process.env.MONGODB_URI || "mongodb://localhost:27017/scrapper";
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/scrapper'
     const con = await mongoose.connect(mongoUri, { useNewUrlParser: true });
     if (con) {
       console.log("Connected Successfull !");

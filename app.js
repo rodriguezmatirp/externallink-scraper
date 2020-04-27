@@ -7,6 +7,7 @@ var mongoose = require("mongoose");
 var cors = require("cors");
 var bodyParser = require("body-parser");
 var indexRouter = require("./routes/index");
+var userController = require("./routes/user");
 
 var app = express();
 db = async () => {
@@ -22,7 +23,7 @@ db = async () => {
   }
 };
 db();
-app.use(cors());
+app.use(cors({ exposedHeaders: "x-auth-token" }));
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
@@ -34,7 +35,13 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(bodyParser.urlencoded({ extended: false }));
+
+//load Schema
+const User = require("./model/user");
+
+//Routes
 app.use("/", indexRouter);
+app.use("/users", userController);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

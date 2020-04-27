@@ -13,7 +13,7 @@ module.exports.register = async (req, res) => {
     });
   } else {
     if (password.length < 8) {
-      res.status(400).json({
+      res.status(403).json({
         message: "Password atleast of 8 characters",
         error: true,
         data: null,

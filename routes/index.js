@@ -65,6 +65,21 @@ router.get('/get/Date', async (req, res, next) => {
 });
 
 
+router.get('/get/follow', async (req, res, next) => {
+  console.log(req.query.site);
+  var link = req.query.site;
+  var start = req.query.start;
+  var end = req.query.end;
+  console.log(start);
+  console.log(end);
+
+  const response = await getController.getdoFollowByDate(req, res)
+});
+
+router.get('/search', async (req, res, next) => {
+  const response = await getController.searchByMainLink(req, res)
+});
+
 
 router.get('/algo2', async (req, res, next) => {
   res.render('index', { title: 'Express' });

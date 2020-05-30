@@ -82,7 +82,9 @@ router.get('/search', async (req, res, next) => {
 router.post('/check', async (req, res, next) => {
   const response = await getController.checked(req, res)
 });
-
+router.get('/getHistory', async (req, res, next) => {
+  const response = await getController.getHistory(req, res)
+});
 
 router.get('/algo2', async (req, res, next) => {
   res.render('index', { title: 'Express' });

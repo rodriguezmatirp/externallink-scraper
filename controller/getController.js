@@ -1,19 +1,19 @@
 const mongoose = require('mongoose');
 const articleSchema = require('../model/article');
 const sitemapSchema = require('../model/sitemap');
+const historySchema = require('../model/history');
 
 module.exports.get = async (link, skip, limit) => {
     try {
         skip = Number(skip);
         limit = Number(limit);
         const doc = await articleSchema.find({ main_link: link }).skip(skip).limit(limit);
-        let result=[]
-        for(let i=0;i<doc.length;i++)
-        {
-            if(doc[i].externalLinks.length==0)
-            continue;
+        let result = []
+        for (let i = 0; i < doc.length; i++) {
+            if (doc[i].externalLinks.length == 0)
+                continue;
             else
-            result.push(doc[i]);
+                result.push(doc[i]);
         }
 
         return (result);
@@ -53,13 +53,12 @@ module.exports.getByDate = async (link, start, end) => {
             });
         }
 
-        let result=[]
-        for(let i=0;i<doc.length;i++)
-        {
-            if(doc[i].externalLinks.length==0)
-            continue;
+        let result = []
+        for (let i = 0; i < doc.length; i++) {
+            if (doc[i].externalLinks.length == 0)
+                continue;
             else
-            result.push(doc[i]);
+                result.push(doc[i]);
         }
 
         return (result);
@@ -124,16 +123,15 @@ module.exports.getdoFollowByDate = async (req, res) => {
 
         }
 
-        let result=[]
-        for(let i=0;i<doc.length;i++)
-        {
-            if(doc[i].externalLinks.length==0)
-            continue;
+        let result = []
+        for (let i = 0; i < doc.length; i++) {
+            if (doc[i].externalLinks.length == 0)
+                continue;
             else
-            result.push(doc[i]);
+                result.push(doc[i]);
         }
 
-       
+
 
         res.status(200).json({ doc: result });
 
@@ -166,6 +164,28 @@ module.exports.checked = async (req, res) => {
         let doc = await articleSchema.findOne({ _id: article_id });
         if (doc.checked.length == 0) {
             doc.checked.push(user_id)
+            let dochistory = await historySchema.findOne({ user_id: user_id })
+            console.log(dochistory);
+            if (dochistory == null) {
+
+                let history = new historySchema({
+                    user_id: user_id,
+                    article: doc
+                })
+                dochistory = await history.save();
+            }
+            else {
+                let arr1 = dochistory.article
+                console.log(arr1);
+
+                arr1.push(doc)
+                console.log("after push:-" + arr1);
+
+
+                dochistory = await historySchema.findOneAndUpdate({ user_id: user_id }, { article: arr1 });
+                console.log(dochistory);
+
+            }
         }
         else {
             if (doc.checked.includes(user_id)) {
@@ -182,10 +202,36 @@ module.exports.checked = async (req, res) => {
             }
             else {
                 doc.checked.push(user_id)
+                let dochistory = await historySchema.findOne({ user_id: user_id })
+                console.log(dochistory);
+                let arr1 = dochistory.article
+                console.log("previous:-" + arr1);
+
+                arr1.push(doc)
+                console.log("array after push:-" + arr1);
+
+
+                dochistory = await historySchema.findByIdAndUpdate({ user_id: user_id }, { article: arr1 });
             }
         }
         const result = await articleSchema.findOneAndUpdate({ _id: article_id }, { checked: doc.checked });
         res.status(200).json({ doc: result });
+
+    } catch (err) {
+        return ({ status: false, result: null, err: err });
+
+    }
+}
+
+
+module.exports.getHistory= async (req, res) => {
+    try {
+        let user_id = req.query.user_id
+      
+
+        const doc = await historySchema.find({ user_id: user_id });
+
+        res.status(200).json({ doc: doc });
 
     } catch (err) {
         return ({ status: false, result: null, err: err });

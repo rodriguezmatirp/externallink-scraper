@@ -223,14 +223,17 @@ module.exports.checked = async (req, res) => {
 
                 }
                 else {
-                    let arr1 = dochistory.article
+                    arr1 = dochistory.article
                     console.log("previous:-" + arr1);
 
                     arr1.push(doc)
+
+
+
                     console.log("array after push:-" + arr1);
 
 
-                    dochistory = await historySchema.findByIdAndUpdate({ user_id: user_id }, { article: arr1 });
+                    dochistory = await historySchema.findOneAndUpdate({ user_id: user_id }, { article: arr1 });
                 }
             }
         }

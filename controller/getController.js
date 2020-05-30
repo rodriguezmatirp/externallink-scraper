@@ -7,8 +7,16 @@ module.exports.get = async (link, skip, limit) => {
         skip = Number(skip);
         limit = Number(limit);
         const doc = await articleSchema.find({ main_link: link }).skip(skip).limit(limit);
+        let result=[]
+        for(let i=0;i<doc.length;i++)
+        {
+            if(doc[i].externalLinks.length==0)
+            continue;
+            else
+            result.push(doc[i]);
+        }
 
-        return (doc);
+        return (result);
 
     } catch (err) {
         return ({ status: false, result: null, err: err });
@@ -44,6 +52,17 @@ module.exports.getByDate = async (link, start, end) => {
                 }
             });
         }
+
+        let result=[]
+        for(let i=0;i<doc.length;i++)
+        {
+            if(doc[i].externalLinks.length==0)
+            continue;
+            else
+            result.push(doc[i]);
+        }
+
+        return (result);
         return (doc)
     }
     catch (err) {
@@ -105,7 +124,18 @@ module.exports.getdoFollowByDate = async (req, res) => {
 
         }
 
-        res.status(200).json({ doc: doc });
+        let result=[]
+        for(let i=0;i<doc.length;i++)
+        {
+            if(doc[i].externalLinks.length==0)
+            continue;
+            else
+            result.push(doc[i]);
+        }
+
+       
+
+        res.status(200).json({ doc: result });
 
     } catch (err) {
         res.status(400).json({ status: false, result: null, err: err });
@@ -118,9 +148,44 @@ module.exports.searchByMainLink = async (req, res) => {
         let query = req.query.query
         console.log('/^' + query.toLowerCase() + "/");
 
-        const doc = await articleSchema.find({ searchkey: { $regex: query, $options: "$i" } });
+        const doc = await articleSchema.find({ articlelink: query });
 
         res.status(200).json({ doc: doc });
+
+    } catch (err) {
+        return ({ status: false, result: null, err: err });
+
+    }
+}
+
+module.exports.checked = async (req, res) => {
+    try {
+        let user_id = req.body.user_id
+        let article_id = req.body.article_id;
+        let arr = []
+        let doc = await articleSchema.findOne({ _id: article_id });
+        if (doc.checked.length == 0) {
+            doc.checked.push(user_id)
+        }
+        else {
+            if (doc.checked.includes(user_id)) {
+
+                for (let i = 0; i < doc.checked.length; i++) {
+                    if (doc.checked[i] == user_id) {
+                        continue;
+                    }
+                    else {
+                        arr.push(doc.checked[i]);
+                    }
+                }
+                doc.checked = arr;
+            }
+            else {
+                doc.checked.push(user_id)
+            }
+        }
+        const result = await articleSchema.findOneAndUpdate({ _id: article_id }, { checked: doc.checked });
+        res.status(200).json({ doc: result });
 
     } catch (err) {
         return ({ status: false, result: null, err: err });

@@ -79,6 +79,9 @@ router.get('/get/follow', async (req, res, next) => {
 router.get('/search', async (req, res, next) => {
   const response = await getController.searchByMainLink(req, res)
 });
+router.post('/check', async (req, res, next) => {
+  const response = await getController.checked(req, res)
+});
 
 
 router.get('/algo2', async (req, res, next) => {

@@ -9,6 +9,7 @@ const ArticleSchema = new mongoose.Schema(
         page: { type: Number, required: true },
         dofollow:{ type: Array, required: false },
         nofollow:{ type: Array, required: false },
+        checked:{ type: Array, required: false },
         externalLinks: { type: Array, required: true },
         created_at: { type: Date, required: false, default: Date.now() },
         updated_at: { type: Date, required: false }

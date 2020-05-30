@@ -162,17 +162,23 @@ module.exports.checked = async (req, res) => {
         let article_id = req.body.article_id;
         let arr = []
         let doc = await articleSchema.findOne({ _id: article_id });
+        console.log(doc);
+
         if (doc.checked.length == 0) {
             doc.checked.push(user_id)
             let dochistory = await historySchema.findOne({ user_id: user_id })
-            console.log(dochistory);
+            console.log("doc:-" + dochistory);
             if (dochistory == null) {
+                console.log("hello");
+
 
                 let history = new historySchema({
                     user_id: user_id,
                     article: doc
                 })
                 dochistory = await history.save();
+                console.log(dochistory);
+
             }
             else {
                 let arr1 = dochistory.article
@@ -204,14 +210,28 @@ module.exports.checked = async (req, res) => {
                 doc.checked.push(user_id)
                 let dochistory = await historySchema.findOne({ user_id: user_id })
                 console.log(dochistory);
-                let arr1 = dochistory.article
-                console.log("previous:-" + arr1);
-
-                arr1.push(doc)
-                console.log("array after push:-" + arr1);
+                if (dochistory == null) {
+                    console.log("hello");
 
 
-                dochistory = await historySchema.findByIdAndUpdate({ user_id: user_id }, { article: arr1 });
+                    let history = new historySchema({
+                        user_id: user_id,
+                        article: doc
+                    })
+                    dochistory = await history.save();
+                    console.log(dochistory);
+
+                }
+                else {
+                    let arr1 = dochistory.article
+                    console.log("previous:-" + arr1);
+
+                    arr1.push(doc)
+                    console.log("array after push:-" + arr1);
+
+
+                    dochistory = await historySchema.findByIdAndUpdate({ user_id: user_id }, { article: arr1 });
+                }
             }
         }
         const result = await articleSchema.findOneAndUpdate({ _id: article_id }, { checked: doc.checked });
@@ -224,10 +244,10 @@ module.exports.checked = async (req, res) => {
 }
 
 
-module.exports.getHistory= async (req, res) => {
+module.exports.getHistory = async (req, res) => {
     try {
         let user_id = req.query.user_id
-      
+
 
         const doc = await historySchema.find({ user_id: user_id });
 

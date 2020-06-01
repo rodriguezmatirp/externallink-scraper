@@ -54,7 +54,7 @@ router.get('/get/Date', async (req, res, next) => {
   console.log(start);
   console.log(end);
 
-  const response = await getController.getByDate(link, start, end)
+  const response = await getController.getByDate(link, start, end,req,res)
 
   if (response.err == null) {
     res.status(200).json({ doc: response });
@@ -65,6 +65,26 @@ router.get('/get/Date', async (req, res, next) => {
 });
 
 
+router.get('/get/follow', async (req, res, next) => {
+  console.log(req.query.site);
+  var link = req.query.site;
+  var start = req.query.start;
+  var end = req.query.end;
+  console.log(start);
+  console.log(end);
+
+  const response = await getController.getdoFollowByDate(req, res)
+});
+
+router.get('/search', async (req, res, next) => {
+  const response = await getController.searchByMainLink(req, res)
+});
+router.post('/check', async (req, res, next) => {
+  const response = await getController.checked(req, res)
+});
+router.get('/getHistory', async (req, res, next) => {
+  const response = await getController.getHistory(req, res)
+});
 
 router.get('/algo2', async (req, res, next) => {
   res.render('index', { title: 'Express' });

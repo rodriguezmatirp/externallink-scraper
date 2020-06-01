@@ -75,11 +75,6 @@ module.exports.getByDate = async (link, start, end,req,res) => {
 
 module.exports.getdoFollowByDate = async (req, res) => {
     try {
-        start = new Date(req.query.start);
-        end = new Date(req.query.end)
-        end = await incrementDate(end, 1)
-        console.log(start);
-        console.log(end);
         let skip=req.query.skip;
         let limit=req.query.limit;
         skip = Number(skip);
@@ -88,23 +83,12 @@ module.exports.getdoFollowByDate = async (req, res) => {
         if (req.query.site == "global") {
             console.log("global");
 
-            doc = await articleSchema.find({
-                lastmod: {
-                    $gt: start,
-                    $lt: end
-                }
-            }).skip(skip).limit(limit);
+            doc = await articleSchema.find().skip(skip).limit(limit);
         }
         else {
             console.log("not global");
 
-            doc = await articleSchema.find({
-                main_link: req.query.site,
-                lastmod: {
-                    $gt: start,
-                    $lt: end
-                }
-            }).skip(skip).limit(limit);
+            doc = await articleSchema.find({main_link: req.query.site}).skip(skip).limit(limit);
 
         }
         let i = 0;

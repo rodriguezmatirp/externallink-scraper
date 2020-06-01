@@ -54,7 +54,7 @@ router.get('/get/Date', async (req, res, next) => {
   console.log(start);
   console.log(end);
 
-  const response = await getController.getByDate(link, start, end)
+  const response = await getController.getByDate(link, start, end,req,res)
 
   if (response.err == null) {
     res.status(200).json({ doc: response });

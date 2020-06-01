@@ -23,7 +23,7 @@ module.exports.get = async (link, skip, limit) => {
 
     }
 }
-module.exports.getByDate = async (link, start, end) => {
+module.exports.getByDate = async (link, start, end,req,res) => {
     try {
         start = new Date(start);
         end = new Date(end)
@@ -31,6 +31,10 @@ module.exports.getByDate = async (link, start, end) => {
         console.log(start);
         console.log(end);
         let doc = "";
+        let skip=req.query.skip;
+        let limit=req.query.limit;
+        skip = Number(skip);
+        limit = Number(limit);
         if (link == "global") {
             console.log("global");
 
@@ -39,7 +43,7 @@ module.exports.getByDate = async (link, start, end) => {
                     $gt: start,
                     $lt: end
                 }
-            });
+            }).skip(skip).limit(limit);
         }
         else {
             console.log("not global");
@@ -50,7 +54,7 @@ module.exports.getByDate = async (link, start, end) => {
                     $gt: start,
                     $lt: end
                 }
-            });
+            }).skip(skip).limit(limit);
         }
 
         let result = []
@@ -76,6 +80,10 @@ module.exports.getdoFollowByDate = async (req, res) => {
         end = await incrementDate(end, 1)
         console.log(start);
         console.log(end);
+        let skip=req.query.skip;
+        let limit=req.query.limit;
+        skip = Number(skip);
+        limit = Number(limit);
         let doc = "";
         if (req.query.site == "global") {
             console.log("global");
@@ -85,7 +93,7 @@ module.exports.getdoFollowByDate = async (req, res) => {
                     $gt: start,
                     $lt: end
                 }
-            });
+            }).skip(skip).limit(limit);
         }
         else {
             console.log("not global");
@@ -96,7 +104,7 @@ module.exports.getdoFollowByDate = async (req, res) => {
                     $gt: start,
                     $lt: end
                 }
-            });
+            }).skip(skip).limit(limit);
 
         }
         let i = 0;

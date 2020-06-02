@@ -8,6 +8,7 @@ module.exports.get = async (link, skip, limit) => {
         skip = Number(skip);
         limit = Number(limit);
         const doc = await articleSchema.find({ main_link: link }).skip(skip).limit(limit);
+        const meta=await articleSchema.count();
         let result = []
         for (let i = 0; i < doc.length; i++) {
             if (doc[i].externalLinks.length == 0)
@@ -16,7 +17,7 @@ module.exports.get = async (link, skip, limit) => {
                 result.push(doc[i]);
         }
 
-        return (result);
+        return ({result:result,meta:meta});
 
     } catch (err) {
         return ({ status: false, result: null, err: err });
@@ -35,6 +36,7 @@ module.exports.getByDate = async (link, start, end,req,res) => {
         let limit=req.query.limit;
         skip = Number(skip);
         limit = Number(limit);
+        const meta=await articleSchema.count();
         if (link == "global") {
             console.log("global");
 
@@ -65,8 +67,7 @@ module.exports.getByDate = async (link, start, end,req,res) => {
                 result.push(doc[i]);
         }
 
-        return (result);
-        return (doc)
+        return ({result:result,meta:meta});
     }
     catch (err) {
         return ({ status: false, result: null, err: err });
@@ -80,6 +81,7 @@ module.exports.getdoFollowByDate = async (req, res) => {
         skip = Number(skip);
         limit = Number(limit);
         let doc = "";
+        const meta=await articleSchema.count();
         if (req.query.site == "global") {
             console.log("global");
 
@@ -125,7 +127,7 @@ module.exports.getdoFollowByDate = async (req, res) => {
 
 
 
-        res.status(200).json({ doc: result });
+        res.status(200).json({ doc: result,meta:meta });
 
     } catch (err) {
         res.status(400).json({ status: false, result: null, err: err });

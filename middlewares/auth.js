@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 
 module.exports.allAuth = (req, res, next) => {
-  const token = req.header("x-auth-token");
+  const token = req.headers["x-auth-token"];
   if (!token)
     return res
       .status(401)

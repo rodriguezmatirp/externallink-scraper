@@ -8,6 +8,7 @@ var cors = require("cors");
 var bodyParser = require("body-parser");
 var indexRouter = require("./routes/index");
 var userController = require("./routes/user");
+const serveIndex = require('serve-index');
 
 var app = express();
 db = async () => {
@@ -31,6 +32,8 @@ app.set("view engine", "jade");
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(express.static('public'));
+app.use('/ftp', express.static('public'), serveIndex('public', {'icons': true}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(bodyParser.urlencoded({ extended: false }));

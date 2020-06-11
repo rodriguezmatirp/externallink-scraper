@@ -78,6 +78,12 @@ router.post("/check", allAuth, async (req, res, next) => {
 router.get("/getHistory", async (req, res, next) => {
   const response = await getController.getHistory(req, res);
 });
+router.get("/downloadAll", async (req, res, next) => {
+  const response = await getController.getAll(req, res);
+});
+router.get("/downloadSkip", async (req, res, next) => {
+  const response = await getController.getBySkip(req, res);
+});
 
 router.get("/algo2", async (req, res, next) => {
   res.render("index", { title: "Express" });

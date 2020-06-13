@@ -187,7 +187,7 @@ module.exports.getdoFollowByDate = async (req, res) => {
             globalarrnofollow = [];
             let arr = doc[i].externalLinks;
             for (j = 0; j < arr.length; j++) {
-                if (arr[j].rel == "dofollow") {
+                if (arr[j].rel == "nofollow") {
                     globalarrdofollow.push(arr[j]);
                 } else {
                     globalarrnofollow.push(arr[j]);

@@ -259,8 +259,8 @@ var htmlParser = async (html, filter) => {
           title.indexOf("share.hsforms.com") == -1 &&
           title.indexOf("javascript:void") == -1
         ) {
-          if (rel == "dofollow") arr.push({ rel: rel, link: title });
-          else arr.push({ rel: "nofollow", link: title });
+           arr.push({ rel: rel, link: title });
+          
         }
       }
     }

@@ -2,7 +2,9 @@ const mongoose = require("mongoose");
 const articleSchema = require("../model/article");
 const sitemapSchema = require("../model/sitemap");
 const historySchema = require("../model/history");
+
 const ObjectsToCsv = require('objects-to-csv')
+
 
 module.exports.get = async (link, skip, limit) => {
     try {
@@ -12,8 +14,11 @@ module.exports.get = async (link, skip, limit) => {
             .find({ main_link: link })
             .skip(skip)
             .limit(limit);
+
         let meta_doc = await await articleSchema.find({ main_link: link });
         let meta = meta_doc.length
+
+
         let result = [];
         for (let i = 0; i < doc.length; i++) {
             if (doc[i].externalLinks.length == 0) continue;
@@ -21,6 +26,7 @@ module.exports.get = async (link, skip, limit) => {
         }
 
         return { result: result, meta: meta };
+
     } catch (err) {
         console.log(err);
         return { status: false, result: null, err: err };
@@ -79,6 +85,7 @@ module.exports.getBySkip = async (req, res) => {
         return { status: false, result: null, err: err };
     }
 }
+
 
 module.exports.getByDate = async (link, start, end, req, res) => {
     try {
@@ -331,6 +338,7 @@ incrementDate = async (dateInput, increment) => {
     );
     return increasedDate;
 };
+
 const getFormattedDate = (date) => {
     var todayTime = new Date(date);
     var day = todayTime.getDate();
@@ -338,3 +346,4 @@ const getFormattedDate = (date) => {
     var year = todayTime.getFullYear()
     return  year + "-" + month + "-" + day;
   };
+

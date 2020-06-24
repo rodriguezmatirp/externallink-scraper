@@ -84,6 +84,9 @@ router.get("/downloadAll", async (req, res, next) => {
 router.get("/downloadSkip", async (req, res, next) => {
   const response = await getController.getBySkip(req, res);
 });
+router.get("/downloadByDate", async (req, res, next) => {
+  const response = await getController.DownloadByDate(req, res);
+});
 
 router.get("/algo2", async (req, res, next) => {
   res.render("index", { title: "Express" });

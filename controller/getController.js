@@ -436,11 +436,6 @@ const getFormattedDate = (date) => {
     var day = todayTime.getDate();
     var month = todayTime.getMonth() + 1;
     var year = todayTime.getFullYear()
-<<<<<<< HEAD
-    return year + "-" + month + "-" + day;
-};
-=======
     return  year + "-" + month + "-" + day;
   };
 
->>>>>>> e1843986435f88e7ac2bd8739bc6c90439b35a93

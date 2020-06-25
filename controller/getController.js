@@ -42,15 +42,15 @@ module.exports.getAll = async (req, res) => {
             let arr = doc[i].externalLinks;
             if (arr.length > 0) {
                 for (let j = 0; j < arr.length; j++) {
-                    var date=doc[i].lastmod.getDate()+"-"+doc[i].lastmod.getMonth()+"-"+doc[i].lastmod.getFullYear();
-                    console.log(typeof(date));
-                    result.push({ articleLink: doc[i].articlelink, externalLink: arr[j].link, rel: arr[j].rel, dateOfPost:date })
+                    var date = doc[i].lastmod.getDate() + "-" + doc[i].lastmod.getMonth() + "-" + doc[i].lastmod.getFullYear();
+                    console.log(typeof (date));
+                    result.push({ articleLink: doc[i].articlelink, externalLink: arr[j].link, rel: arr[j].rel, dateOfPost: date })
                 }
             }
         }
         //doc=[{id:1,pass:1233},{id:2,pass:1263},{id:3,pass:1253}];
         let csv = new ObjectsToCsv(result)
-        await csv.toDisk('./public/uploads/'+req.query.title+'.csv', { append: true })
+        await csv.toDisk('./public/uploads/' + req.query.title + '.csv', { append: true })
         res.status(200).json({ doc: result });
     } catch (err) {
         console.log(err);
@@ -60,25 +60,25 @@ module.exports.getAll = async (req, res) => {
 
 module.exports.getBySkip = async (req, res) => {
     try {
-        req.query.skip=Number(req.query.skip)
-        req.query.limit=Number(req.query.limit)
+        req.query.skip = Number(req.query.skip)
+        req.query.limit = Number(req.query.limit)
         let doc = await articleSchema.find({ main_link: req.query.site }).skip(req.query.skip).limit(req.query.limit);
         let result = [];
         for (let i = 0; i < doc.length; i++) {
             let arr = doc[i].externalLinks;
             if (arr.length > 0) {
                 for (let j = 0; j < arr.length; j++) {
-                    console.log( doc[i].lastmod.getFullYear());
-                    var date=doc[i].lastmod.getDate()+"-"+doc[i].lastmod.getMonth()+"-"+doc[i].lastmod.getFullYear();
-                    console.log(typeof(date));
-                    
+                    console.log(doc[i].lastmod.getFullYear());
+                    var date = doc[i].lastmod.getDate() + "-" + doc[i].lastmod.getMonth() + "-" + doc[i].lastmod.getFullYear();
+                    console.log(typeof (date));
+
                     result.push({ articleLink: doc[i].articlelink, externalLink: arr[j].link, rel: arr[j].rel, dateOfPost: date })
                 }
             }
         }
         //doc=[{id:1,pass:1233},{id:2,pass:1263},{id:3,pass:1253}];
         let csv = new ObjectsToCsv(result)
-        await csv.toDisk('./public/uploads/'+req.query.title+'.csv', { append: true })
+        await csv.toDisk('./public/uploads/' + req.query.title + '.csv', { append: true })
         res.status(200).json({ doc: result });
     } catch (err) {
         console.log(err);
@@ -109,7 +109,7 @@ module.exports.getByDate = async (link, start, end, req, res) => {
                     lastmod: {
                         $gt: start,
                         $lt: end,
-                    },
+                    }
                 })
                 .skip(skip)
                 .limit(limit);
@@ -118,7 +118,7 @@ module.exports.getByDate = async (link, start, end, req, res) => {
                     lastmod: {
                         $gt: start,
                         $lt: end,
-                    },
+                    }
                 });
             meta = meta_doc.length;
         } else {
@@ -235,6 +235,101 @@ module.exports.searchByMainLink = async (req, res) => {
         return { status: false, result: null, err: err };
     }
 };
+
+
+module.exports.DownloadByDate = async (req, res) => {
+    try {
+        start = new Date(req.query.start);
+        end = new Date(req.query.end);
+        end = await incrementDate(end, 1);
+        console.log(start);
+        console.log(end);
+        let doc = "";
+
+        let meta_doc = null;
+
+        let meta = null;
+        if (req.query.link == "global") {
+            console.log("global");
+
+            doc = await articleSchema
+                .find({
+                    lastmod: {
+                        $gt: start,
+                        $lt: end,
+                    },
+                })
+            //console.log(doc);
+
+            meta_doc = await articleSchema
+                .find({
+                    lastmod: {
+                        $gt: start,
+                        $lt: end,
+                    },
+                });
+            meta = meta_doc.length;
+        } else {
+            console.log("not global");
+
+            doc = await articleSchema
+                .find({
+                    main_link: link,
+                    lastmod: {
+                        $gt: start,
+                        $lt: end,
+                    },
+                })
+
+
+            meta_doc = await articleSchema
+                .find({
+                    main_link: link,
+                    lastmod: {
+                        $gt: start,
+                        $lt: end,
+                    },
+                })
+            meta = meta_doc.length;
+        }
+
+         let result = [];
+        // for (let i = 0; i < doc.length; i++) {
+        //     if (doc[i].externalLinks.length == 0) continue;
+        //     else result.push(doc[i]);
+        // }
+
+        for (let i = 0; i < doc.length; i++) {
+            console.log(doc[i]);
+            
+            let arr = doc[i].externalLinks;
+            if (arr.length > 0) {
+                for (let j = 0; j < arr.length; j++) {
+                    //console.log(doc[i].lastmod.getFullYear());
+                    var date = String(doc[i].lastmod.getDate()) + "-" + String(doc[i].lastmod.getMonth()) + "-" + String(doc[i].lastmod.getFullYear());
+                   // console.log(typeof (date));
+                   var s=getFormattedDate(doc[i].lastmod);
+
+                    result.push({ articleLink: doc[i].articlelink, externalLink: arr[j].link, rel: arr[j].rel, dateOfPost: s })
+                }
+            }
+        }
+        //console.log(result);
+        
+        let csv = new ObjectsToCsv(result)
+        await csv.toDisk('./public/uploads/' + req.query.title + '_date.csv', { append: true })
+
+        res.status(200).json({ doc: result, meta: meta });
+    } catch (err) {
+        console.log(err);
+        return { status: false, result: null, err: err };
+    }
+};
+
+
+
+
+
 
 module.exports.checked = async (req, res) => {
     try {

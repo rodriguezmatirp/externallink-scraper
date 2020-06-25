@@ -109,7 +109,7 @@ module.exports.getByDate = async (link, start, end, req, res) => {
                     lastmod: {
                         $gt: start,
                         $lt: end,
-                    },
+                    }
                 })
                 .skip(skip)
                 .limit(limit);
@@ -118,7 +118,7 @@ module.exports.getByDate = async (link, start, end, req, res) => {
                     lastmod: {
                         $gt: start,
                         $lt: end,
-                    },
+                    }
                 });
             meta = meta_doc.length;
         } else {
@@ -259,7 +259,7 @@ module.exports.DownloadByDate = async (req, res) => {
                         $lt: end,
                     },
                 })
-            console.log(doc);
+            //console.log(doc);
 
             meta_doc = await articleSchema
                 .find({
@@ -300,18 +300,21 @@ module.exports.DownloadByDate = async (req, res) => {
         // }
 
         for (let i = 0; i < doc.length; i++) {
+            console.log(doc[i]);
+            
             let arr = doc[i].externalLinks;
             if (arr.length > 0) {
                 for (let j = 0; j < arr.length; j++) {
                     //console.log(doc[i].lastmod.getFullYear());
-                    var date = doc[i].lastmod.getDate() + "-" + doc[i].lastmod.getMonth() + "-" + doc[i].lastmod.getFullYear();
+                    var date = String(doc[i].lastmod.getDate()) + "-" + String(doc[i].lastmod.getMonth()) + "-" + String(doc[i].lastmod.getFullYear());
                    // console.log(typeof (date));
+                   var s=getFormattedDate(doc[i].lastmod);
 
-                    result.push({ articleLink: doc[i].articlelink, externalLink: arr[j].link, rel: arr[j].rel, dateOfPost: date })
+                    result.push({ articleLink: doc[i].articlelink, externalLink: arr[j].link, rel: arr[j].rel, dateOfPost: s })
                 }
             }
         }
-        console.log(result);
+        //console.log(result);
         
         let csv = new ObjectsToCsv(result)
         await csv.toDisk('./public/uploads/' + req.query.title + '_date.csv', { append: true })

@@ -2,28 +2,49 @@ const mongoose = require("mongoose");
 const articleSchema = require("../model/article");
 const sitemapSchema = require("../model/sitemap");
 const historySchema = require("../model/history");
+const restrictedSchema = require('../model/restricted')
 
 const ObjectsToCsv = require('objects-to-csv')
 
-
-module.exports.get = async (link, skip, limit) => {
+module.exports.get = async(link, skip, limit) => {
     try {
         skip = Number(skip);
         limit = Number(limit);
-        const doc = await articleSchema
+        var doc = await articleSchema
             .find({ main_link: link })
             .skip(skip)
             .limit(limit);
 
         let meta_doc = await await articleSchema.find({ main_link: link });
         let meta = meta_doc.length
+        console.log(meta)
 
-
+        let filtered = []
+        let restrict = await restrictedSchema.find({})
+        restrict.forEach((data) => {
+            filtered.push(data.restricted_link)
+        })
+        for (let data of doc) {
+            for (let ext_link of data.externalLinks) {
+                for (let fil of filtered) {
+                    if (ext_link.link.includes(fil)) {
+                        console.log('herrr--------------')
+                        delete ext_link.link
+                        delete ext_link.rel
+                        delete ext_link.status
+                        meta = meta - 1
+                        break
+                    } else continue
+                }
+            }
+        }
+        console.log(meta)
         let result = [];
         for (let i = 0; i < doc.length; i++) {
             if (doc[i].externalLinks.length == 0) continue;
             else result.push(doc[i]);
         }
+
 
         return { result: result, meta: meta };
 
@@ -33,17 +54,37 @@ module.exports.get = async (link, skip, limit) => {
     }
 };
 
-module.exports.getAll = async (req, res) => {
+module.exports.getAll = async(req, res) => {
     try {
-
         let doc = await articleSchema.find({ main_link: req.query.site });
+        let filtered = []
+        let restrict = await restrictedSchema.find({})
+        restrict.forEach((data) => {
+            filtered.push(data.restricted_link)
+        })
+        for (let data of doc) {
+            for (let ext_link of data.externalLinks) {
+                for (let fil of filtered) {
+                    if (ext_link.link.includes(fil)) {
+                        console.log('herrr--------------')
+                        console.log(ext_link)
+                        delete ext_link.link
+                        delete ext_link.rel
+                        delete ext_link.status
+                        meta = meta - 1
+                        break
+                    } else continue
+                }
+            }
+            console.log(data)
+        }
         let result = [];
         for (let i = 0; i < doc.length; i++) {
             let arr = doc[i].externalLinks;
             if (arr.length > 0) {
                 for (let j = 0; j < arr.length; j++) {
                     var date = doc[i].lastmod.getDate() + "-" + doc[i].lastmod.getMonth() + "-" + doc[i].lastmod.getFullYear();
-                    console.log(typeof (date));
+                    console.log(typeof(date));
                     result.push({ articleLink: doc[i].articlelink, externalLink: arr[j].link, rel: arr[j].rel, dateOfPost: date })
                 }
             }
@@ -58,7 +99,7 @@ module.exports.getAll = async (req, res) => {
     }
 }
 
-module.exports.getBySkip = async (req, res) => {
+module.exports.getBySkip = async(req, res) => {
     try {
         req.query.skip = Number(req.query.skip)
         req.query.limit = Number(req.query.limit)
@@ -70,7 +111,7 @@ module.exports.getBySkip = async (req, res) => {
                 for (let j = 0; j < arr.length; j++) {
                     console.log(doc[i].lastmod.getFullYear());
                     var date = doc[i].lastmod.getDate() + "-" + doc[i].lastmod.getMonth() + "-" + doc[i].lastmod.getFullYear();
-                    console.log(typeof (date));
+                    console.log(typeof(date));
 
                     result.push({ articleLink: doc[i].articlelink, externalLink: arr[j].link, rel: arr[j].rel, dateOfPost: date })
                 }
@@ -87,7 +128,7 @@ module.exports.getBySkip = async (req, res) => {
 }
 
 
-module.exports.getByDate = async (link, start, end, req, res) => {
+module.exports.getByDate = async(link, start, end, req, res) => {
     try {
         start = new Date(start);
         end = new Date(end);
@@ -146,6 +187,28 @@ module.exports.getByDate = async (link, start, end, req, res) => {
             meta = meta_doc.length;
         }
 
+        let filtered = []
+        let restrict = await restrictedSchema.find({})
+        restrict.forEach((data) => {
+            filtered.push(data.restricted_link)
+        })
+        for (let data of doc) {
+            for (let ext_link of data.externalLinks) {
+                for (let fil of filtered) {
+                    if (ext_link.link.includes(fil)) {
+                        console.log('herrr--------------')
+                        console.log(ext_link)
+                        delete ext_link.link
+                        delete ext_link.rel
+                        delete ext_link.status
+                        meta = meta - 1
+                        break
+                    } else continue
+                }
+            }
+            console.log(data)
+        }
+
         let result = [];
         for (let i = 0; i < doc.length; i++) {
             if (doc[i].externalLinks.length == 0) continue;
@@ -159,7 +222,7 @@ module.exports.getByDate = async (link, start, end, req, res) => {
     }
 };
 
-module.exports.getdoFollowByDate = async (req, res) => {
+module.exports.getdoFollowByDate = async(req, res) => {
     try {
         let skip = req.query.skip;
         let limit = req.query.limit;
@@ -168,7 +231,7 @@ module.exports.getdoFollowByDate = async (req, res) => {
         let doc = "";
         let meta = null;
         let meta_doc = null;
-        if (req.query.site == "global") {
+        if (req.query.site === "global") {
             console.log("global");
 
             doc = await articleSchema.find().skip(skip).limit(limit);
@@ -200,12 +263,33 @@ module.exports.getdoFollowByDate = async (req, res) => {
                     globalarrnofollow.push(arr[j]);
                 }
             }
-            console.log("no follow:-" + globalarrnofollow);
-            console.log("do follow:-" + globalarrdofollow);
+            // console.log("no follow:-" + globalarrnofollow);
+            // console.log("do follow:-" + globalarrdofollow);
             doc[i].dofollow = globalarrdofollow;
             doc[i].nofollow = globalarrnofollow;
-            console.log(doc[i].dofollow);
-            console.log(doc[i].nofollow);
+            // console.log(doc[i].dofollow);
+            // console.log(doc[i].nofollow);
+        }
+        let filtered = []
+        let restrict = await restrictedSchema.find({})
+        restrict.forEach((data) => {
+            filtered.push(data.restricted_link)
+        })
+        for (let data of doc) {
+            for (let ext_link of data.externalLinks) {
+                for (let fil of filtered) {
+                    if (ext_link.link.includes(fil)) {
+                        console.log('herrr--------------')
+                        console.log(ext_link)
+                        delete ext_link.link
+                        delete ext_link.rel
+                        delete ext_link.status
+                        meta = meta - 1
+                        break
+                    } else continue
+                }
+            }
+            console.log(data)
         }
 
         let result = [];
@@ -213,6 +297,7 @@ module.exports.getdoFollowByDate = async (req, res) => {
             if (doc[i].externalLinks.length == 0) continue;
             else result.push(doc[i]);
         }
+        console.log(result)
 
         res.status(200).json({ doc: result, meta: meta });
     } catch (err) {
@@ -222,7 +307,7 @@ module.exports.getdoFollowByDate = async (req, res) => {
     }
 };
 
-module.exports.searchByMainLink = async (req, res) => {
+module.exports.searchByMainLink = async(req, res) => {
     try {
         let query = req.query.query;
         console.log("/^" + query.toLowerCase() + "/");
@@ -237,7 +322,7 @@ module.exports.searchByMainLink = async (req, res) => {
 };
 
 
-module.exports.DownloadByDate = async (req, res) => {
+module.exports.DownloadByDate = async(req, res) => {
     try {
         start = new Date(req.query.start);
         end = new Date(req.query.end);
@@ -259,7 +344,7 @@ module.exports.DownloadByDate = async (req, res) => {
                         $lt: end,
                     },
                 })
-            //console.log(doc);
+                //console.log(doc);
 
             meta_doc = await articleSchema
                 .find({
@@ -293,7 +378,7 @@ module.exports.DownloadByDate = async (req, res) => {
             meta = meta_doc.length;
         }
 
-         let result = [];
+        let result = [];
         // for (let i = 0; i < doc.length; i++) {
         //     if (doc[i].externalLinks.length == 0) continue;
         //     else result.push(doc[i]);
@@ -301,21 +386,21 @@ module.exports.DownloadByDate = async (req, res) => {
 
         for (let i = 0; i < doc.length; i++) {
             console.log(doc[i]);
-            
+
             let arr = doc[i].externalLinks;
             if (arr.length > 0) {
                 for (let j = 0; j < arr.length; j++) {
                     //console.log(doc[i].lastmod.getFullYear());
                     var date = String(doc[i].lastmod.getDate()) + "-" + String(doc[i].lastmod.getMonth()) + "-" + String(doc[i].lastmod.getFullYear());
-                   // console.log(typeof (date));
-                   var s=getFormattedDate(doc[i].lastmod);
+                    // console.log(typeof (date));
+                    var s = getFormattedDate(doc[i].lastmod);
 
                     result.push({ articleLink: doc[i].articlelink, externalLink: arr[j].link, rel: arr[j].rel, dateOfPost: s })
                 }
             }
         }
         //console.log(result);
-        
+
         let csv = new ObjectsToCsv(result)
         await csv.toDisk('./public/uploads/' + req.query.title + '_date.csv', { append: true })
 
@@ -331,7 +416,7 @@ module.exports.DownloadByDate = async (req, res) => {
 
 
 
-module.exports.checked = async (req, res) => {
+module.exports.checked = async(req, res) => {
     try {
         let user_id = req.user.id;
         let article_id = req.body.article_id;
@@ -359,10 +444,7 @@ module.exports.checked = async (req, res) => {
                 arr1.push(doc);
                 console.log("after push:-" + arr1);
 
-                dochistory = await historySchema.findOneAndUpdate(
-                    { user_id: user_id },
-                    { article: arr1 }
-                );
+                dochistory = await historySchema.findOneAndUpdate({ user_id: user_id }, { article: arr1 });
                 console.log(dochistory);
             }
         } else {
@@ -396,17 +478,11 @@ module.exports.checked = async (req, res) => {
 
                     console.log("array after push:-" + arr1);
 
-                    dochistory = await historySchema.findOneAndUpdate(
-                        { user_id: user_id },
-                        { article: arr1 }
-                    );
+                    dochistory = await historySchema.findOneAndUpdate({ user_id: user_id }, { article: arr1 });
                 }
             }
         }
-        const result = await articleSchema.findOneAndUpdate(
-            { _id: article_id },
-            { checked: doc.checked }
-        );
+        const result = await articleSchema.findOneAndUpdate({ _id: article_id }, { checked: doc.checked });
         res.status(200).json({ doc: result });
     } catch (err) {
         console.log(err);
@@ -414,7 +490,7 @@ module.exports.checked = async (req, res) => {
     }
 };
 
-module.exports.getHistory = async (req, res) => {
+module.exports.getHistory = async(req, res) => {
     try {
         let user_id = req.query.user_id;
 
@@ -426,7 +502,7 @@ module.exports.getHistory = async (req, res) => {
         return { status: false, result: null, err: err };
     }
 };
-incrementDate = async (dateInput, increment) => {
+incrementDate = async(dateInput, increment) => {
     var dateFormatTotime = new Date(dateInput);
     var increasedDate = new Date(
         dateFormatTotime.getTime() + increment * 86400000
@@ -439,6 +515,5 @@ const getFormattedDate = (date) => {
     var day = todayTime.getDate();
     var month = todayTime.getMonth() + 1;
     var year = todayTime.getFullYear()
-    return  year + "-" + month + "-" + day;
-  };
-
+    return year + "-" + month + "-" + day;
+};

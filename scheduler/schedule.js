@@ -5,7 +5,7 @@ const cron = require('node-cron')
 
 const url = process.env.NODE_ENV === "production" ? "/api" : "http://localhost:3000";
 
-var control = cron.schedule('00 30 21 * * *', async() => {
+var control = cron.schedule('00 00 04 * * *', async() => {
     try {
         console.log('-----------------------------------------------------')
         const sitemaps = await master.find({})

@@ -24,3 +24,13 @@ module.exports.get = async() => {
         return { err: e, status: false }
     }
 }
+
+module.exports.deleteRestrict = async(link) => {
+    try {
+        const removed = await restrictedSchema.findOneAndDelete({ restricted_link: link })
+        return { doc: removed }
+    } catch (e) {
+        console.log(e)
+        return { err: e, status: false }
+    }
+}

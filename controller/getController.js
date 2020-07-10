@@ -12,11 +12,12 @@ module.exports.get = async(link, skip, limit) => {
         limit = Number(limit);
         var doc = await articleSchema
             .find({ main_link: link })
+            .sort({ lastmod: 'desc' })
             .skip(skip)
-            .limit(limit);
+            .limit(limit)
 
         let meta_doc = await await articleSchema.find({ main_link: link });
-        let meta = meta_doc.length
+        var meta = meta_doc.length
         console.log(meta)
 
         let filtered = []
@@ -32,17 +33,27 @@ module.exports.get = async(link, skip, limit) => {
                         delete ext_link.link
                         delete ext_link.rel
                         delete ext_link.status
-                        meta = meta - 1
                         break
                     } else continue
                 }
             }
         }
-        console.log(meta)
         let result = [];
+        let result_count = 0
         for (let i = 0; i < doc.length; i++) {
             if (doc[i].externalLinks.length == 0) continue;
             else result.push(doc[i]);
+        }
+
+        for (let i = 0; i < result.length; i++) {
+            var filterExt = []
+            for (let data of result[i].externalLinks) {
+                if (data.link === undefined) continue
+                else {
+                    filterExt.push(data)
+                }
+            }
+            result[i].externalLinks = filterExt
         }
 
 
@@ -56,7 +67,7 @@ module.exports.get = async(link, skip, limit) => {
 
 module.exports.getAll = async(req, res) => {
     try {
-        let doc = await articleSchema.find({ main_link: req.query.site });
+        let doc = await articleSchema.find({ main_link: req.query.site }).sort({ lastmod: 'desc' });
         let filtered = []
         let restrict = await restrictedSchema.find({})
         restrict.forEach((data) => {
@@ -71,12 +82,10 @@ module.exports.getAll = async(req, res) => {
                         delete ext_link.link
                         delete ext_link.rel
                         delete ext_link.status
-                        meta = meta - 1
                         break
                     } else continue
                 }
             }
-            console.log(data)
         }
         let result = [];
         for (let i = 0; i < doc.length; i++) {
@@ -215,6 +224,19 @@ module.exports.getByDate = async(link, start, end, req, res) => {
             else result.push(doc[i]);
         }
 
+        let result_count = 0
+
+        for (let i = 0; i < result.length; i++) {
+            var filterExt = []
+            for (let data of result[i].externalLinks) {
+                if (data.link === undefined) continue
+                else {
+                    filterExt.push(data)
+                }
+            }
+            result[i].externalLinks = filterExt
+        }
+
         return { result: result, meta: meta };
     } catch (err) {
         console.log(err);
@@ -244,7 +266,8 @@ module.exports.getdoFollowByDate = async(req, res) => {
             doc = await articleSchema
                 .find({ main_link: req.query.site })
                 .skip(skip)
-                .limit(limit);
+                .limit(limit)
+                .sort({ lastmod: 'desc' });
             meta_doc = await articleSchema.find({ main_link: req.query.site })
             meta = meta_doc.length;
 

@@ -23,6 +23,26 @@ router.post('/restrict', async(req, res, next) => {
     }
 })
 
+router.get('/deleteWebsite', async(req, res, next) => {
+    const link = req.query.link
+    const response = await masterController.deleteLink(link)
+    if (response.err) {
+        res.status(400).json({ err: 'Unable to delete' })
+    } else {
+        res.status(200).json({ status: 'Deleted Successfully!' })
+    }
+})
+
+router.get('/deleteRestricted', async(req, res, next) => {
+    const link = req.query.link
+    const response = await filterController.deleteRestrict(link)
+    if (response.err) {
+        res.status(400).json({ err: response.err })
+    } else {
+        res.status(200).json({ status: 'Deleted Successfully!' })
+    }
+})
+
 router.get('/restrict', async(req, res, next) => {
     const response = await filterController.get()
     if (response.err == null) {

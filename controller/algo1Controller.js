@@ -237,8 +237,15 @@ var htmlParser = async(html, filter) => {
         var data = $(this);
         let title = data.attr("href");
         rel = data.attr("rel");
-        if (rel == "dofollow" && !(/^#.*/.test(title)) && title != '') {
-            arr.push({ rel: rel, link: title });
+        let text = data.text()
+        if (/<img.*>/.test(text) === true) {
+            console.log(text)
+            var alt = /<img.*?[alt="(.*?)" | alt='(.*?)'].*>/g.exec(text)[1]
+            console.log(alt)
+            text = alt
+        }
+        if (rel === "dofollow" && !(/^#.*/.test(title)) && title !== '') {
+            arr.push({ rel: rel, link: title, text: text });
         } else if (!(/^#.*/.test(title)) && title != '') {
             if (title != undefined) {
                 let upper = title.toUpperCase();
@@ -251,7 +258,7 @@ var htmlParser = async(html, filter) => {
                     title.indexOf("share.hsforms.com") == -1 &&
                     title.indexOf("javascript:void") == -1
                 ) {
-                    arr.push({ rel: rel, link: title });
+                    arr.push({ rel: rel, link: title, text: text });
 
                 }
             }
@@ -320,22 +327,26 @@ const algo1insertSiteMap = async(result, url, length) => {
                 link: result["sitemapindex"]["sitemap"][i].loc[0],
                 page: i + 1,
             });
-            const sitemap = new sitemapSchema({
-                parent_link: url,
-                updated_at: Date.now(),
-                link: result["sitemapindex"]["sitemap"][i].loc[0],
-                lastmod: result["sitemapindex"]["sitemap"][i].lastmod[0],
-                page: i + 1,
-            });
-            const doc = await sitemap.save();
-            console.log(counter);
-            // console.log(doc);
+            if (result["sitemapindex"]["sitemap"][i].loc[0].includes("sitemap-tags.xml") === true) continue
+            else {
+                const sitemap = new sitemapSchema({
+                    parent_link: url,
+                    updated_at: Date.now(),
+                    link: result["sitemapindex"]["sitemap"][i].loc[0],
+                    lastmod: result["sitemapindex"]["sitemap"][i].lastmod[0],
+                    page: i + 1,
+                });
 
-            if (doc) {
-                counter = counter + 1;
-            }
-            if (counter == length) {
-                return true;
+                const doc = await sitemap.save();
+                console.log(counter);
+                // console.log(doc);
+
+                if (doc) {
+                    counter = counter + 1;
+                }
+                if (counter == length) {
+                    return true;
+                }
             }
         }
     } catch (err) {

@@ -18,27 +18,6 @@ module.exports.postStatus = async(link_, parent) => {
         const doc = await new_.save()
         var doc_ = []
         doc_.push(doc)
-        let filtered = []
-        let restrict = await restrictedSchema.find({})
-        restrict.forEach((data) => {
-            filtered.push(data.restricted_link)
-        })
-        for (let data of doc_) {
-            for (let ext_link of data.externalLinks) {
-                for (let fil of filtered) {
-                    if (ext_link.link.includes(fil)) {
-                        console.log('herrr--------------')
-                        console.log(ext_link)
-                        delete ext_link.link
-                        delete ext_link.rel
-                        delete ext_link.status
-                        break
-                    } else continue
-                }
-            }
-            console.log(data)
-        }
-
         return { result: doc }
     } catch (e) {
         console.log(e)

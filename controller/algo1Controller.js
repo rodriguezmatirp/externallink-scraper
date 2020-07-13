@@ -61,7 +61,7 @@ module.exports.algo1 = async(req) => {
         });
         // console.log("response", response);
     } else {
-        console.log("here cpmes 2");
+        console.log("here comes 2");
 
         // for site map insertion//
         response = await new Promise((resolve, reject) => {
@@ -175,10 +175,10 @@ module.exports.algo1 = async(req) => {
     });
 
     if (resp === true) {
-        return { status: true, message: message, url: url };
+        return { status: true, message: message, url: url, flag: true };
     }
     if (resp == false) {
-        return { status: true, message: message, url: url };
+        return { status: true, message: message, url: url, flag: false };
     }
 };
 
@@ -275,38 +275,42 @@ const algo1insertArticle = async(result, main_url, url, length, req) => {
 
         var i = 0;
         var counter = 0;
+        var j = 0;
         var arr = [];
         for (i = 0; i < length; i++) {
             console.log(
                 "link getting sctrached:- " + result["urlset"]["url"][i].loc[0]
             );
+            if (result["urlset"]["url"][i].loc[0].includes(".com/tag/")) continue
+            else {
+                arr.push({ link: result["urlset"]["url"][i].loc[0], page: i + 1 });
+                const html = await fetchPage(result["urlset"]["url"][i].loc[0], 6);
+                var filterTitle = await TitleSplitter(req.body.url);
+                const external = await htmlParser(html, filterTitle);
+                console.log(external)
+                external.forEach((arr) => {
+                    arr.status = false
+                })
+                const articlemap = new articleSchema({
+                    main_link: main_url,
+                    parent_link: url,
+                    updated_at: Date.now(),
+                    externalLinks: external,
+                    articlelink: result["urlset"]["url"][i].loc[0],
+                    lastmod: result["urlset"]["url"][i].lastmod[0],
+                    page: j + 1,
+                });
+                const doc = await articlemap.save();
+                console.log(counter);
+                // console.log(doc);
 
-            arr.push({ link: result["urlset"]["url"][i].loc[0], page: i + 1 });
-            const html = await fetchPage(result["urlset"]["url"][i].loc[0], 6);
-            var filterTitle = await TitleSplitter(req.body.url);
-            const external = await htmlParser(html, filterTitle);
-            console.log(external)
-            external.forEach((arr) => {
-                arr.status = false
-            })
-            const articlemap = new articleSchema({
-                main_link: main_url,
-                parent_link: url,
-                updated_at: Date.now(),
-                externalLinks: external,
-                articlelink: result["urlset"]["url"][i].loc[0],
-                lastmod: result["urlset"]["url"][i].lastmod[0],
-                page: i + 1,
-            });
-            const doc = await articlemap.save();
-            console.log(counter);
-            // console.log(doc);
-
-            if (doc) {
-                counter = counter + 1;
-            }
-            if (counter == length) {
-                return true;
+                if (doc) {
+                    counter = counter + 1;
+                }
+                if (counter == length) {
+                    return true;
+                }
+                j++;
             }
         }
     } catch (err) {
@@ -327,26 +331,23 @@ const algo1insertSiteMap = async(result, url, length) => {
                 link: result["sitemapindex"]["sitemap"][i].loc[0],
                 page: i + 1,
             });
-            if (result["sitemapindex"]["sitemap"][i].loc[0].includes("sitemap-tags.xml") === true) continue
-            else {
-                const sitemap = new sitemapSchema({
-                    parent_link: url,
-                    updated_at: Date.now(),
-                    link: result["sitemapindex"]["sitemap"][i].loc[0],
-                    lastmod: result["sitemapindex"]["sitemap"][i].lastmod[0],
-                    page: i + 1,
-                });
+            const sitemap = new sitemapSchema({
+                parent_link: url,
+                updated_at: Date.now(),
+                link: result["sitemapindex"]["sitemap"][i].loc[0],
+                lastmod: result["sitemapindex"]["sitemap"][i].lastmod[0],
+                page: i + 1,
+            });
 
-                const doc = await sitemap.save();
-                console.log(counter);
-                // console.log(doc);
+            const doc = await sitemap.save();
+            console.log(counter);
+            // console.log(doc);
 
-                if (doc) {
-                    counter = counter + 1;
-                }
-                if (counter == length) {
-                    return true;
-                }
+            if (doc) {
+                counter = counter + 1;
+            }
+            if (counter == length) {
+                return true;
             }
         }
     } catch (err) {

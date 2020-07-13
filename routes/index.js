@@ -5,6 +5,7 @@ var getController = require("../controller/getController");
 var masterController = require("../controller/masterController");
 var statusController = require("../controller/statusController")
 var filterController = require('../controller/filterController')
+var userController = require('../controller/userController')
 const { allAuth } = require("../middlewares/auth");
 
 /* GET home page. */
@@ -12,6 +13,15 @@ router.post("/algo1", async(req, res, next) => {
     const response = await algo1Controller.algo1(req);
     res.status(200).json({ doc: response });
 });
+
+router.get("/crawlAll", async(req, res, next) => {
+    const response = await masterController.crawlAll()
+    if (response.err == null) {
+        res.status(200).json({ result: response })
+    } else {
+        res.status(400).json(response)
+    }
+})
 
 router.post('/restrict', async(req, res, next) => {
     var url = req.query.link
@@ -45,6 +55,33 @@ router.get('/deleteRestricted', async(req, res, next) => {
 
 router.get('/restrict', async(req, res, next) => {
     const response = await filterController.get()
+    if (response.err == null) {
+        res.status(200).json({ result: response })
+    } else {
+        res.status(400).json(response)
+    }
+})
+
+router.get('/info', async(req, res, next) => {
+    const response = await filterController.WebsiteInfo()
+    if (response.err == null) {
+        res.status(200).json({ result: response })
+    } else {
+        res.status(400).json(response)
+    }
+})
+
+router.get("/deleteProfile", async(req, res, next) => {
+    var username = req.query.username
+    const response = await userController.deleteProfile(username)
+    if (response.err) {
+        res.status(400).json({ result: response })
+    } else {
+        res.status(200).json(response)
+    }
+})
+router.get("/getUsers", async(req, res, next) => {
+    const response = await userController.getUsers()
     if (response.err == null) {
         res.status(200).json({ result: response })
     } else {
@@ -140,14 +177,6 @@ router.get("/downloadSkip", async(req, res, next) => {
 });
 router.get("/downloadByDate", async(req, res, next) => {
     const response = await getController.DownloadByDate(req, res);
-});
-
-router.get("/algo2", async(req, res, next) => {
-    res.render("index", { title: "Express" });
-});
-
-router.get("/algo3", async(req, res, next) => {
-    res.render("index", { title: "Express" });
 });
 
 router.get("/algo2", async(req, res, next) => {

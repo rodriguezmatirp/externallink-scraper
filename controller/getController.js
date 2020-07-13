@@ -255,9 +255,20 @@ module.exports.getdoFollowByDate = async(req, res) => {
         let meta_doc = null;
         if (req.query.site === "global") {
             console.log("global");
-
-            doc = await articleSchema.find().skip(skip).limit(limit);
-            meta_doc = await articleSchema.find()
+            var start = req.query.start;
+            var end = req.query.end;
+            doc = await articleSchema.find({
+                lastmod: {
+                    $gt: start,
+                    $lt: end,
+                }
+            }).skip(skip).limit(limit)
+            meta_doc = await articleSchema.find({
+                lastmod: {
+                    $gt: start,
+                    $lt: end,
+                }
+            })
             meta = meta_doc.length;
 
         } else {
@@ -286,12 +297,8 @@ module.exports.getdoFollowByDate = async(req, res) => {
                     globalarrnofollow.push(arr[j]);
                 }
             }
-            // console.log("no follow:-" + globalarrnofollow);
-            // console.log("do follow:-" + globalarrdofollow);
             doc[i].dofollow = globalarrdofollow;
             doc[i].nofollow = globalarrnofollow;
-            // console.log(doc[i].dofollow);
-            // console.log(doc[i].nofollow);
         }
         let filtered = []
         let restrict = await restrictedSchema.find({})

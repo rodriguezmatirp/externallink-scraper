@@ -2,6 +2,9 @@ const mongoose = require("mongoose");
 const masterSchema = require("../model/master");
 const articleSchema = require('../model/article')
 const sitemapSchema = require('../model/sitemap')
+const axios = require('axios')
+
+const url = process.env.NODE_ENV === "production" ? "/api" : "http://localhost:3000";
 
 module.exports.insert = async(req) => {
     try {
@@ -39,5 +42,21 @@ module.exports.deleteLink = async(url) => {
         return { status: true }
     } catch (err) {
         return { status: false, err: err }
+    }
+}
+
+module.exports.crawlAll = async() => {
+    try {
+        console.log('----------------------')
+        const sitemapData = await masterSchema.find({})
+        for (let data of sitemapData) {
+            console.log(data.link)
+            const res = await axios.post(`${url}/algo1`, { url: data.link })
+            console.log(res)
+        }
+        return { status: true }
+    } catch (e) {
+        console.log(e)
+        return { status: false, err: e }
     }
 }

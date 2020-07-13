@@ -9,21 +9,9 @@ var control = cron.schedule('00 00 04 * * *', async() => {
     try {
         console.log('-----------------------------------------------------')
         const sitemaps = await master.find({})
-            // await Promise.all(sitemaps.map(async(link) => {
-            //     console.log(link["link"])
-            //     const sitemap = link["link"]
-            //     const res = await axios.post(`${url}/algo1`, { url: sitemap })
-            // }))
-
-        var flag = false
-        var i = 0
-        while (!flag && i < sitemaps.length) {
-            const sitemap = sitemaps[i]["link"]
+        for (let sitemap of sitemaps) {
+            const sitemap = link["link"]
             const res = await axios.post(`${url}/algo1`, { url: sitemap })
-            if (res.status) {
-                flag = false
-                i++
-            }
         }
     } catch (err) {
         console.log(err)

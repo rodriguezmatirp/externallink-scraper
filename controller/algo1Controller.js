@@ -239,7 +239,7 @@ var htmlParser = async(html, filter) => {
         rel = data.attr("rel");
         let text = data.text()
         if (/<img.*>/.test(text) === true) {
-            console.log(text)
+            // console.log(text)
             var alt = /<img.*?[alt="(.*?)" | alt='(.*?)'].*>/g.exec(text)[1]
                 // console.log(alt)
             text = alt
@@ -264,7 +264,7 @@ var htmlParser = async(html, filter) => {
             }
         }
     });
-    console.log(arr);
+    // console.log(arr);
     return arr;
 };
 

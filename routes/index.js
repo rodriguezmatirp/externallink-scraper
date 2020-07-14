@@ -15,7 +15,7 @@ router.post("/algo1", async(req, res, next) => {
 });
 
 router.get("/crawlAll", async(req, res, next) => {
-    const response = await masterController.crawlAll()
+    const response = await masterController.crawlAll_()
     if (response.err == null) {
         res.status(200).json({ result: response })
     } else {

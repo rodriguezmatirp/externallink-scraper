@@ -45,7 +45,7 @@ module.exports.deleteLink = async(url) => {
     }
 }
 
-module.exports.crawlAll = async() => {
+module.exports.crawlAll_ = async() => {
     try {
         console.log('----------------------')
         const sitemapData = await masterSchema.find({})

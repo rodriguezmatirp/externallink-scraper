@@ -241,7 +241,7 @@ var htmlParser = async(html, filter) => {
         if (/<img.*>/.test(text) === true) {
             console.log(text)
             var alt = /<img.*?[alt="(.*?)" | alt='(.*?)'].*>/g.exec(text)[1]
-            console.log(alt)
+                // console.log(alt)
             text = alt
         }
         if (rel === "dofollow" && !(/^#.*/.test(title)) && title !== '') {
@@ -287,7 +287,7 @@ const algo1insertArticle = async(result, main_url, url, length, req) => {
                 const html = await fetchPage(result["urlset"]["url"][i].loc[0], 6);
                 var filterTitle = await TitleSplitter(req.body.url);
                 const external = await htmlParser(html, filterTitle);
-                console.log(external)
+                // console.log(external)
                 external.forEach((arr) => {
                     arr.status = false
                 })

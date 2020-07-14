@@ -25,7 +25,8 @@ router.get("/crawlAll", async(req, res, next) => {
 
 router.post('/restrict', async(req, res, next) => {
     var url = req.query.link
-    const response = await filterController.add_(url)
+    var options = req.query.options
+    const response = await filterController.add_(url, options)
     if (response.err == null) {
         res.status(200).json({ result: response })
     } else {
@@ -45,7 +46,8 @@ router.get('/deleteWebsite', async(req, res, next) => {
 
 router.get('/deleteRestricted', async(req, res, next) => {
     const link = req.query.link
-    const response = await filterController.deleteRestrict(link)
+    const type = req.query.type
+    const response = await filterController.deleteRestrict(link, type)
     if (response.err) {
         res.status(400).json({ err: response.err })
     } else {

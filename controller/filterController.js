@@ -5,10 +5,10 @@ const articleSchema = require('../model/article')
 const masterSchema = require('../model/master')
 const sitemapSchema = require('../model/sitemap')
 
-module.exports.add_ = async(url) => {
+module.exports.add_ = async(url, type) => {
     try {
-        const main = await new restrictedSchema({ restricted_link: url }).save()
-        console.log(main)
+        const main = await new restrictedSchema({ restricted_link: url, restricted_type: type }).save()
+            // console.log(main)
 
         return { result: main }
     } catch (e) {
@@ -27,9 +27,9 @@ module.exports.get = async() => {
     }
 }
 
-module.exports.deleteRestrict = async(link) => {
+module.exports.deleteRestrict = async(link, type) => {
     try {
-        const removed = await restrictedSchema.findOneAndDelete({ restricted_link: link })
+        const removed = await restrictedSchema.findOneAndDelete({ restricted_link: link, restricted_type: type })
         return { doc: removed }
     } catch (e) {
         console.log(e)

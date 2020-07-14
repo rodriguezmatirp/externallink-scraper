@@ -9,7 +9,7 @@ const url = process.env.NODE_ENV === "production" ? "/api" : "http://localhost:3
 module.exports.insert = async(req) => {
     try {
         const fd = await masterSchema.findOne({ link: req.body.link });
-        console.log(fd);
+        console.log("---Success adding " + req.body.link + " filter in database-----");
 
         if (fd == null) {
             const master = new masterSchema(req.body);
@@ -52,7 +52,7 @@ module.exports.crawlAll = async() => {
         for (let data of sitemapData) {
             console.log(data.link)
             const res = await axios.post(`${url}/algo1`, { url: data.link })
-            console.log(res)
+                // console.log(res)
         }
         return { status: true }
     } catch (e) {

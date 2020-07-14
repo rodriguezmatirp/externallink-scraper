@@ -20,16 +20,24 @@ module.exports.get = async(link, skip, limit) => {
         var meta = meta_doc.length
         console.log(meta)
 
-        let filtered = []
-        let restrict = await restrictedSchema.find({})
+        //fitering process
+        let filtered_all = []
+        let filtered_est = []
+
+        var restrict = await restrictedSchema.find()
+
         restrict.forEach((data) => {
-            filtered.push(data.restricted_link)
+            if (data.restricted_type === "EST") {
+                filtered_est.push(data.restricted_link)
+            } else {
+                filtered_all.push(data.restricted_link)
+            }
         })
         for (let data of doc) {
             for (let ext_link of data.externalLinks) {
-                for (let fil of filtered) {
+                for (let fil of filtered_all) {
                     if (ext_link.link.includes(fil)) {
-                        console.log('herrr--------------')
+                        console.log('Filtering')
                         delete ext_link.link
                         delete ext_link.rel
                         delete ext_link.status
@@ -38,6 +46,26 @@ module.exports.get = async(link, skip, limit) => {
                 }
             }
         }
+        for (let data of doc) {
+            if (data.main_link.includes("startuptalky.com/sitemap.xml")) continue
+            else {
+                for (let ext_link of data.externalLinks) {
+                    for (let fil of filtered_est) {
+                        if (ext_link.link.includes(fil)) {
+                            console.log('Filtering')
+                            delete ext_link.link
+                            delete ext_link.rel
+                            delete ext_link.status
+                            break
+                        } else continue
+                    }
+                }
+            }
+        }
+
+
+        //Filtering ends
+
         let result = [];
         let result_count = 0
         for (let i = 0; i < doc.length; i++) {
@@ -68,22 +96,44 @@ module.exports.get = async(link, skip, limit) => {
 module.exports.getAll = async(req, res) => {
     try {
         let doc = await articleSchema.find({ main_link: req.query.site }).sort({ lastmod: 'desc' });
-        let filtered = []
-        let restrict = await restrictedSchema.find({})
+        let filtered_all = []
+        let filtered_est = []
+
+        var restrict = await restrictedSchema.find()
+
         restrict.forEach((data) => {
-            filtered.push(data.restricted_link)
+            if (data.restricted_type === "EST") {
+                filtered_est.push(data.restricted_link)
+            } else {
+                filtered_all.push(data.restricted_link)
+            }
         })
         for (let data of doc) {
             for (let ext_link of data.externalLinks) {
-                for (let fil of filtered) {
+                for (let fil of filtered_all) {
                     if (ext_link.link.includes(fil)) {
-                        console.log('herrr--------------')
-                        console.log(ext_link)
+                        console.log('Filtering')
                         delete ext_link.link
                         delete ext_link.rel
                         delete ext_link.status
                         break
                     } else continue
+                }
+            }
+        }
+        for (let data of doc) {
+            if (data.main_link.includes("startuptalky.com/sitemap.xml")) continue
+            else {
+                for (let ext_link of data.externalLinks) {
+                    for (let fil of filtered_est) {
+                        if (ext_link.link.includes(fil)) {
+                            console.log('Filtering')
+                            delete ext_link.link
+                            delete ext_link.rel
+                            delete ext_link.status
+                            break
+                        } else continue
+                    }
                 }
             }
         }
@@ -196,27 +246,59 @@ module.exports.getByDate = async(link, start, end, req, res) => {
             meta = meta_doc.length;
         }
 
-        let filtered = []
-        let restrict = await restrictedSchema.find({})
-        restrict.forEach((data) => {
-            filtered.push(data.restricted_link)
+        //filtering websites
+
+        let filtered_EST = [] //Except Startup talky
+        let restrict_EST = await restrictedSchema.find({ restricted_type: "EST" })
+        restrict_EST.forEach((data) => {
+            filtered_EST.push(data.restricted_link)
+        })
+        let filtered_ST = [] //Startup talky restriction
+        let restrict_ST = await restrictedSchema.find({ restricted_type: "ALL" })
+        restrict_ST.forEach((data) => {
+            filtered_ST.push(data.restricted_link)
         })
         for (let data of doc) {
-            for (let ext_link of data.externalLinks) {
-                for (let fil of filtered) {
-                    if (ext_link.link.includes(fil)) {
-                        console.log('herrr--------------')
-                        console.log(ext_link)
-                        delete ext_link.link
-                        delete ext_link.rel
-                        delete ext_link.status
-                        meta = meta - 1
-                        break
-                    } else continue
+            if (data.main_link.includes("startuptalky.com/sitemap")) {
+                for (let ext_link of data.externalLinks) {
+                    for (let fil of filtered_ST) {
+                        if (ext_link.link.includes(fil)) {
+                            console.log('Filtering ST------')
+                            delete ext_link.link
+                            delete ext_link.rel
+                            delete ext_link.status
+                            break
+                        } else continue
+                    }
+                }
+            } else {
+                for (let ext_link of data.externalLinks) {
+                    for (let fil of filtered_EST) {
+                        if (ext_link.link.includes(fil)) {
+                            console.log('Filtering EST------')
+                            delete ext_link.link
+                            delete ext_link.rel
+                            delete ext_link.status
+                            break
+                        } else continue
+                    }
+                    if (ext_link.link) {
+                        for (let fil of filtered_ST) {
+                            if (ext_link.link.includes(fil)) {
+                                console.log('Filtering ALL------')
+                                delete ext_link.link
+                                delete ext_link.rel
+                                delete ext_link.status
+                                break
+                            } else continue
+                        }
+                    }
                 }
             }
-            console.log(data)
+            // console.log(data)
         }
+
+        //filtering ends here
 
         let result = [];
         for (let i = 0; i < doc.length; i++) {
@@ -300,34 +382,75 @@ module.exports.getdoFollowByDate = async(req, res) => {
             doc[i].dofollow = globalarrdofollow;
             doc[i].nofollow = globalarrnofollow;
         }
-        let filtered = []
-        let restrict = await restrictedSchema.find({})
-        restrict.forEach((data) => {
-            filtered.push(data.restricted_link)
+        let filtered_EST = [] //Except Startup talky
+        let restrict_EST = await restrictedSchema.find({ restricted_type: "EST" })
+        restrict_EST.forEach((data) => {
+            filtered_EST.push(data.restricted_link)
+        })
+        let filtered_ST = [] //Startup talky restriction
+        let restrict_ST = await restrictedSchema.find({ restricted_type: "ALL" })
+        restrict_ST.forEach((data) => {
+            filtered_ST.push(data.restricted_link)
         })
         for (let data of doc) {
-            for (let ext_link of data.externalLinks) {
-                for (let fil of filtered) {
-                    if (ext_link.link.includes(fil)) {
-                        console.log('herrr--------------')
-                        console.log(ext_link)
-                        delete ext_link.link
-                        delete ext_link.rel
-                        delete ext_link.status
-                        meta = meta - 1
-                        break
-                    } else continue
+            if (data.link.includes("startuptalky.com/sitemap")) {
+                for (let ext_link of data.externalLinks) {
+                    for (let fil of filtered_ST) {
+                        if (ext_link.link.includes(fil)) {
+                            console.log('Filtering ST------')
+                            delete ext_link.link
+                            delete ext_link.rel
+                            delete ext_link.status
+                            break
+                        } else continue
+                    }
+                }
+            } else {
+                for (let ext_link of data.externalLinks) {
+                    for (let fil of filtered_EST) {
+                        if (ext_link.link.includes(fil)) {
+                            console.log('Filtering EST------')
+                            delete ext_link.link
+                            delete ext_link.rel
+                            delete ext_link.status
+                            break
+                        } else continue
+                    }
+                    if (ext_link.link) {
+                        for (let fil of filtered_ST) {
+                            if (ext_link.link.includes(fil)) {
+                                console.log('Filtering All------')
+                                delete ext_link.link
+                                delete ext_link.rel
+                                delete ext_link.status
+                                break
+                            } else continue
+                        }
+                    }
                 }
             }
-            console.log(data)
+            // console.log(data)
         }
+
+        //filtering ends here
 
         let result = [];
         for (let i = 0; i < doc.length; i++) {
             if (doc[i].externalLinks.length == 0) continue;
             else result.push(doc[i]);
         }
-        console.log(result)
+        // console.log(result)
+
+        for (let i = 0; i < result.length; i++) {
+            var filterExt = []
+            for (let data of result[i].externalLinks) {
+                if (data.link === undefined) continue
+                else {
+                    filterExt.push(data)
+                }
+            }
+            result[i].externalLinks = filterExt
+        }
 
         res.status(200).json({ doc: result, meta: meta });
     } catch (err) {
@@ -415,7 +538,7 @@ module.exports.DownloadByDate = async(req, res) => {
         // }
 
         for (let i = 0; i < doc.length; i++) {
-            console.log(doc[i]);
+            // console.log(doc[i]);
 
             let arr = doc[i].externalLinks;
             if (arr.length > 0) {
@@ -452,7 +575,7 @@ module.exports.checked = async(req, res) => {
         let article_id = req.body.article_id;
         let arr = [];
         let doc = await articleSchema.findOne({ _id: article_id });
-        console.log(doc);
+        // console.log(doc);
 
         if (doc.checked.length == 0) {
             doc.checked.push(user_id);
@@ -466,10 +589,10 @@ module.exports.checked = async(req, res) => {
                     article: doc,
                 });
                 dochistory = await history.save();
-                console.log(dochistory);
+                // console.log(dochistory);
             } else {
                 let arr1 = dochistory.article;
-                console.log(arr1);
+                // console.log(arr1);
 
                 arr1.push(doc);
                 console.log("after push:-" + arr1);

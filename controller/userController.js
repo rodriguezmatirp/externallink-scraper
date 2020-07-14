@@ -95,7 +95,7 @@ module.exports.deleteProfile = async(username) => {
 module.exports.getUsers = async() => {
     try {
         const main = await userSchema.find({}).sort({ createdAt: 'desc' })
-        console.log(main)
+            // console.log(main)
         return { doc: main }
     } catch (e) {
         console.log(e)

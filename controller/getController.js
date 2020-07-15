@@ -144,7 +144,7 @@ module.exports.getAll = async(req, res) => {
                 for (let j = 0; j < arr.length; j++) {
                     var date = doc[i].lastmod.getDate() + "-" + doc[i].lastmod.getMonth() + "-" + doc[i].lastmod.getFullYear();
                     console.log(typeof(date));
-                    result.push({ articleLink: doc[i].articlelink, externalLink: arr[j].link, rel: arr[j].rel, dateOfPost: date })
+                    result.push({ articleLink: doc[i].articlelink, externalLink: arr[j].link, title: arr[j].text, rel: arr[j].rel, dateOfPost: date })
                 }
             }
         }
@@ -172,7 +172,7 @@ module.exports.getBySkip = async(req, res) => {
                     var date = doc[i].lastmod.getDate() + "-" + doc[i].lastmod.getMonth() + "-" + doc[i].lastmod.getFullYear();
                     console.log(typeof(date));
 
-                    result.push({ articleLink: doc[i].articlelink, externalLink: arr[j].link, rel: arr[j].rel, dateOfPost: date })
+                    result.push({ articleLink: doc[i].articlelink, externalLink: arr[j].link, title: arr[j].text, rel: arr[j].rel, dateOfPost: date })
                 }
             }
         }
@@ -393,7 +393,7 @@ module.exports.getdoFollowByDate = async(req, res) => {
             filtered_ST.push(data.restricted_link)
         })
         for (let data of doc) {
-            if (data.link.includes("startuptalky.com/sitemap")) {
+            if (data.main_link.includes("startuptalky.com/sitemap")) {
                 for (let ext_link of data.externalLinks) {
                     for (let fil of filtered_ST) {
                         if (ext_link.link.includes(fil)) {
@@ -439,7 +439,6 @@ module.exports.getdoFollowByDate = async(req, res) => {
             if (doc[i].externalLinks.length == 0) continue;
             else result.push(doc[i]);
         }
-        // console.log(result)
 
         for (let i = 0; i < result.length; i++) {
             var filterExt = []
@@ -451,6 +450,7 @@ module.exports.getdoFollowByDate = async(req, res) => {
             }
             result[i].externalLinks = filterExt
         }
+        // console.log('-----------' + result)
 
         res.status(200).json({ doc: result, meta: meta });
     } catch (err) {
@@ -548,7 +548,7 @@ module.exports.DownloadByDate = async(req, res) => {
                     // console.log(typeof (date));
                     var s = getFormattedDate(doc[i].lastmod);
 
-                    result.push({ articleLink: doc[i].articlelink, externalLink: arr[j].link, rel: arr[j].rel, dateOfPost: s })
+                    result.push({ articleLink: doc[i].articlelink, externalLink: arr[j].link, title: arr[j].text, rel: arr[j].rel, dateOfPost: s })
                 }
             }
         }

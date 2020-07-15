@@ -5,14 +5,14 @@ const cron = require('node-cron')
 
 const url = process.env.NODE_ENV === "production" ? "/api" : "http://localhost:3000";
 
-var control = cron.schedule('00 01 12 * * *', async() => {
+var control = cron.schedule('00 01 00 * * *', async() => {
     try {
         var now = new Date().toLocaleTimeString()
         console.log('Scheduler works ---' + now)
         const sitemaps = await master.find({})
         for (let sitemap of sitemaps) {
-            const sitemap = link["link"]
-            const res = await axios.post(`${url}/algo1`, { url: sitemap })
+            var sitemap_ = sitemap["link"]
+            const res = await axios.post(`${url}/algo1`, { url: sitemap_ })
         }
     } catch (err) {
         console.log(err)

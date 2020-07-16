@@ -51,13 +51,15 @@ module.exports.get = async(link, skip, limit) => {
             else {
                 for (let ext_link of data.externalLinks) {
                     for (let fil of filtered_est) {
-                        if (ext_link.link.includes(fil)) {
-                            console.log('Filtering')
-                            delete ext_link.link
-                            delete ext_link.rel
-                            delete ext_link.status
-                            break
-                        } else continue
+                        if (ext_link.link) {
+                            if (ext_link.link.includes(fil)) {
+                                console.log('Filtering')
+                                delete ext_link.link
+                                delete ext_link.rel
+                                delete ext_link.status
+                                break
+                            } else continue
+                        }
                     }
                 }
             }
@@ -111,13 +113,15 @@ module.exports.getAll = async(req, res) => {
         for (let data of doc) {
             for (let ext_link of data.externalLinks) {
                 for (let fil of filtered_all) {
-                    if (ext_link.link.includes(fil)) {
-                        console.log('Filtering')
-                        delete ext_link.link
-                        delete ext_link.rel
-                        delete ext_link.status
-                        break
-                    } else continue
+                    if (ext_link.link) {
+                        if (ext_link.link.includes(fil)) {
+                            console.log('Filtering')
+                            delete ext_link.link
+                            delete ext_link.rel
+                            delete ext_link.status
+                            break
+                        } else continue
+                    }
                 }
             }
         }
@@ -126,13 +130,15 @@ module.exports.getAll = async(req, res) => {
             else {
                 for (let ext_link of data.externalLinks) {
                     for (let fil of filtered_est) {
-                        if (ext_link.link.includes(fil)) {
-                            console.log('Filtering')
-                            delete ext_link.link
-                            delete ext_link.rel
-                            delete ext_link.status
-                            break
-                        } else continue
+                        if (ext_link.link) {
+                            if (ext_link.link.includes(fil)) {
+                                console.log('Filtering')
+                                delete ext_link.link
+                                delete ext_link.rel
+                                delete ext_link.status
+                                break
+                            } else continue
+                        }
                     }
                 }
             }

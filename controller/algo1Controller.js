@@ -12,6 +12,7 @@ module.exports.algo1 = async(req) => {
     const url = req.body.url;
     const html = await fetchPage(url, 6);
     let response = false;
+    let flag = false
     let message = "";
     let find = await sitemapSchema.find({ parent_link: url });
     console.log('--------' + find.length + '-------')
@@ -62,15 +63,19 @@ module.exports.algo1 = async(req) => {
         // console.log("response", response);
     } else {
         console.log("here comes 2");
-
         // for site map insertion//
         response = await new Promise((resolve, reject) => {
             parser.parseString(html, async function(err, result) {
-                const doc = await algo1insertSiteMap(
-                    result,
-                    url,
-                    result["sitemapindex"]["sitemap"].length
-                );
+                if (result) {
+                    var doc = await algo1insertSiteMap(
+                        result,
+                        url,
+                        result["sitemapindex"]["sitemap"].length
+                    );
+                    flag = true
+                } else if (!result) {
+                    flag = false
+                }
                 if (doc) {
                     message = "First Scrapping data inserted on sitemap!";
                     resolve(true);
@@ -129,6 +134,9 @@ module.exports.algo1 = async(req) => {
             } else {
                 var url = find[i].link;
 
+                const lastData = await articleSchema.findOne({ main_link: req.body.url }).sort({ lastmod: 'desc' })
+                    // console.log(lastData + '--------------------------------------------------')
+
                 var count = doc.length;
                 // console.log("parent link scrateched:-" + find[i].link);
 
@@ -143,7 +151,8 @@ module.exports.algo1 = async(req) => {
                                 req.body.url,
                                 url,
                                 result["urlset"]["url"].length - count,
-                                req
+                                req,
+                                lastData.lastmod
                             );
                             if (doc) {
                                 const update = await sitemapSchema.findOneAndUpdate({ link: url }, { status: 0 });
@@ -175,28 +184,12 @@ module.exports.algo1 = async(req) => {
     });
 
     if (resp === true) {
-        return { status: true, message: message, url: url, flag: true };
+        return { status: true, message: message, url: url, flag: flag };
     }
     if (resp == false) {
-        return { status: true, message: message, url: url, flag: false };
+        return { status: true, message: message, url: url, flag: flag };
     }
 };
-
-// global.sitemap
-// findsitemap = async (url) => {
-//     const html = await fetchPage(url, 6);
-//     let response = await new Promise((resolve, reject) => {
-//         parser.parseString(html, async function (err, result) {
-//             if (result['sitemapindex'] == undefined) {
-
-//             }
-//             else {
-
-//             }
-//         })
-//     })
-
-// }
 
 var checkupdates = async(result, length) => {
     try {
@@ -268,10 +261,16 @@ var htmlParser = async(html, filter) => {
     return arr;
 };
 
-const algo1insertArticle = async(result, main_url, url, length, req) => {
+const algo1insertArticle = async(result, main_url, url, length, req, lastDate) => {
     try {
         var links = result["urlset"]["url"];
         console.log("no of articles to be scratched:- " + length);
+        if (!lastDate) {
+            lastDate = new Date(2010, 00, 00)
+            console.log(lastDate)
+        } else {
+            lastDate = new Date(lastDate)
+        }
 
         var i = 0;
         var counter = 0;
@@ -282,7 +281,8 @@ const algo1insertArticle = async(result, main_url, url, length, req) => {
                 "link getting sctrached:- " + result["urlset"]["url"][i].loc[0]
             );
             if (result["urlset"]["url"][i].loc[0].includes(".com/tag/")) continue
-            else {
+                // else {
+            else if (lastDate < new Date(result["urlset"]["url"][i].lastmod[0])) {
                 arr.push({ link: result["urlset"]["url"][i].loc[0], page: i + 1 });
                 const html = await fetchPage(result["urlset"]["url"][i].loc[0], 6);
                 var filterTitle = await TitleSplitter(req.body.url);

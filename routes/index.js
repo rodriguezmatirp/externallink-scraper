@@ -11,7 +11,12 @@ const { allAuth } = require("../middlewares/auth");
 /* GET home page. */
 router.post("/algo1", async(req, res, next) => {
     const response = await algo1Controller.algo1(req);
-    res.status(200).json({ doc: response });
+    if (response.flag) {
+        res.status(200).json({ doc: response });
+    } else {
+        console.log('failed')
+        res.status(400).json({ doc: response })
+    }
 });
 
 router.get("/crawlAll", async(req, res, next) => {

@@ -12,7 +12,11 @@ var control = cron.schedule('00 01 00 * * *', async() => {
         const sitemaps = await master.find({})
         for (let sitemap of sitemaps) {
             var sitemap_ = sitemap["link"]
-            const res = await axios.post(`${url}/algo1`, { url: sitemap_ })
+            try {
+                await axios.post(`${url}/algo1`, { url: sitemap_ })
+            } catch (e) {
+                console.log(e + '------------------' + sitemap_)
+            }
         }
     } catch (err) {
         console.log(err)

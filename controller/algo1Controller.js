@@ -34,6 +34,7 @@ module.exports.algo1 = async(req) => {
                         url,
                         result["sitemapindex"]["sitemap"].length - count
                     );
+                    flag = true
                     if (doc) {
                         message = "New articles updated on sitemap!!";
                         resolve(true);
@@ -48,6 +49,7 @@ module.exports.algo1 = async(req) => {
                         result,
                         result["sitemapindex"]["sitemap"].length
                     );
+                    flag = true
                     console.log("checkupdates log", doc);
 
                     if (doc) {
@@ -66,16 +68,14 @@ module.exports.algo1 = async(req) => {
         // for site map insertion//
         response = await new Promise((resolve, reject) => {
             parser.parseString(html, async function(err, result) {
-                if (result) {
-                    var doc = await algo1insertSiteMap(
-                        result,
-                        url,
-                        result["sitemapindex"]["sitemap"].length
-                    );
-                    flag = true
-                } else if (!result) {
-                    flag = false
-                }
+                var cpy = result
+                console.log(result)
+                var doc = await algo1insertSiteMap(
+                    cpy,
+                    url,
+                    cpy["sitemapindex"]["sitemap"].length
+                );
+                flag = true
                 if (doc) {
                     message = "First Scrapping data inserted on sitemap!";
                     resolve(true);
@@ -106,13 +106,17 @@ module.exports.algo1 = async(req) => {
 
                 let response = await new Promise((resolve, reject) => {
                     parser.parseString(html, async function(err, result) {
-                        const doc = await algo1insertArticle(
-                            result,
-                            req.body.url,
-                            url,
-                            result["urlset"]["url"].length,
-                            req
-                        );
+                        try {
+                            var doc = await algo1insertArticle(
+                                result,
+                                req.body.url,
+                                url,
+                                result["urlset"]["url"].length,
+                                req
+                            )
+                        } catch (e) {
+                            console.log(e)
+                        }
                         if (doc) {
                             const update = await sitemapSchema.findOneAndUpdate({ link: url }, { status: 0 });
                             if (update) {
@@ -134,8 +138,9 @@ module.exports.algo1 = async(req) => {
             } else {
                 var url = find[i].link;
 
-                const lastData = await articleSchema.findOne({ main_link: req.body.url }).sort({ lastmod: 'desc' })
-                    // console.log(lastData + '--------------------------------------------------')
+                var lastData = await articleSchema.find({ main_link: req.body.url }).sort({ lastmod: 'desc' })
+
+                // console.log(lastData + '--------------------------------------------------')
 
                 var count = doc.length;
                 // console.log("parent link scrateched:-" + find[i].link);
@@ -152,7 +157,7 @@ module.exports.algo1 = async(req) => {
                                 url,
                                 result["urlset"]["url"].length - count,
                                 req,
-                                lastData.lastmod
+                                lastData[0].lastmod
                             );
                             if (doc) {
                                 const update = await sitemapSchema.findOneAndUpdate({ link: url }, { status: 0 });
@@ -235,7 +240,12 @@ var htmlParser = async(html, filter) => {
             // console.log(text)
             var alt = /<img.*?[alt="(.*?)" | alt='(.*?)'].*>/g.exec(text)[1]
                 // console.log(alt)
-            text = alt
+            if (alt !== undefined) {
+                text = alt.trim()
+            } else {
+                text = ""
+            }
+
         }
         if (rel === "dofollow" && !(/^#.*/.test(title)) && title !== '') {
             arr.push({ rel: rel, link: title, text: text });
@@ -267,11 +277,10 @@ const algo1insertArticle = async(result, main_url, url, length, req, lastDate) =
         console.log("no of articles to be scratched:- " + length);
         if (!lastDate) {
             lastDate = new Date(2010, 00, 00)
-            console.log(lastDate)
         } else {
             lastDate = new Date(lastDate)
         }
-
+        console.log(lastDate)
         var i = 0;
         var counter = 0;
         var j = 0;
@@ -282,7 +291,7 @@ const algo1insertArticle = async(result, main_url, url, length, req, lastDate) =
             );
             if (result["urlset"]["url"][i].loc[0].includes(".com/tag/")) continue
                 // else {
-            else if (lastDate < new Date(result["urlset"]["url"][i].lastmod[0])) {
+            else if (lastDate <= new Date(result["urlset"]["url"][i].lastmod[0])) {
                 arr.push({ link: result["urlset"]["url"][i].loc[0], page: i + 1 });
                 const html = await fetchPage(result["urlset"]["url"][i].loc[0], 6);
                 var filterTitle = await TitleSplitter(req.body.url);
@@ -378,3 +387,4 @@ var TitleSplitter = async(url) => {
 
     return split2[0];
 };
+``

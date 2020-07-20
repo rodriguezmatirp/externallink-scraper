@@ -6,6 +6,7 @@ var masterController = require("../controller/masterController");
 var statusController = require("../controller/statusController")
 var filterController = require('../controller/filterController')
 var userController = require('../controller/userController')
+var getDataController = require('../controller/getDataController')
 const { allAuth } = require("../middlewares/auth");
 
 /* GET home page. */
@@ -21,11 +22,7 @@ router.post("/algo1", async(req, res, next) => {
 
 router.get("/crawlAll", async(req, res, next) => {
     const response = await masterController.crawlAll_()
-    if (response.err == null) {
-        res.status(200).json({ result: response })
-    } else {
-        res.status(400).json(response)
-    }
+    res.status(200).json({ result: response })
 })
 
 router.post('/restrict', async(req, res, next) => {
@@ -165,6 +162,18 @@ router.get("/get/follow", async(req, res, next) => {
     const response = await getController.getdoFollowByDate(req, res);
     // console.log(response)
 });
+
+router.get('/getData', async(req, res, next) => {
+    const type = req.query.type
+    const link = req.query.link
+    const start = req.query.start
+    const end = req.query.end
+    const skip = req.query.skip
+    const limit = req.query.limit
+        // console.log(type + '---------' + start + '-----------' + end + '----------' + link)
+    const response = await getDataController.get(link, type, start, end, skip, limit)
+    res.status(200).json({ result: response })
+})
 
 router.get("/search", async(req, res, next) => {
     const response = await getController.searchByMainLink(req, res);

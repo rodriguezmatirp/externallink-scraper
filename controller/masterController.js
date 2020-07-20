@@ -51,8 +51,12 @@ module.exports.crawlAll_ = async() => {
         const sitemapData = await masterSchema.find({})
         for (let data of sitemapData) {
             console.log(data.link)
-            const res = await axios.post(`${url}/algo1`, { url: data.link })
-                // console.log(res)
+            try {
+                await axios.post(`${url}/algo1`, { url: data.link })
+            } catch (e) {
+                console.log(e + '-----------------------------' + data.link)
+            }
+            // console.log(res)
         }
         return { status: true }
     } catch (e) {

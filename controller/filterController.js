@@ -4,6 +4,7 @@ const axios = require('axios')
 const articleSchema = require('../model/article')
 const masterSchema = require('../model/master')
 const sitemapSchema = require('../model/sitemap')
+const infoSchema = require('../model/websiteInfo')
 
 module.exports.add_ = async(url, type) => {
     try {
@@ -39,25 +40,9 @@ module.exports.deleteRestrict = async(link, type) => {
 
 module.exports.WebsiteInfo = async() => {
     try {
-        const base = await masterSchema.find({})
-        var result = []
-        base.forEach((data) => {
-            result.push({ title: data.title, baseSitemap: data.link })
-        })
-        for (let data of result) {
-            var sitemaps = await sitemapSchema.find({ parent_link: data.baseSitemap })
-            data["sitemapCount"] = sitemaps.length
-            var websites = await articleSchema.find({ main_link: data.baseSitemap })
-            data["websiteCount"] = websites.length
-            var lastUpdated = await articleSchema.find({ main_link: data.baseSitemap }).sort({ updated_at: 'desc' }).limit(1)
-            if (lastUpdated[0] !== undefined) {
-                // console.log(lastUpdated[0])
-                data["lastUpdate"] = new Date(lastUpdated[0].updated_at)
-            } else {
-                data["lastUpdate"] = "Not yet Started"
-            }
-        }
-        return { doc: result }
+        const info = await infoSchema.find({}).sort({ updatedAt: 'desc' })
+            // console.log(info)
+        return { doc: info }
     } catch (e) {
         console.log(e)
         return { err: e, status: false }

@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
+const masterSchema = require('../model/master')
 const articleSchema = require("../model/article");
 const sitemapSchema = require("../model/sitemap");
+const websiteInfoSchema = require('../model/websiteInfo')
 const axios = require("axios");
 var fs = require("fs");
 var xml2js = require("xml2js");
@@ -15,6 +17,20 @@ module.exports.algo1 = async(req) => {
     let flag = false
     let message = "";
     let find = await sitemapSchema.find({ parent_link: url });
+
+    var findInfo = await websiteInfoSchema.findOne({ sitemap_link: url })
+    if (!findInfo) {
+        var masterDoc = await masterSchema.findOne({ link: url })
+        var articleDoc = await articleSchema.find({ main_link: url })
+        const findInfo = new websiteInfoSchema({
+            sitemap_link: url,
+            main_link: masterDoc.title,
+            sitemap_count: find.length,
+            website_count: articleDoc.length
+        })
+        await findInfo.save()
+    }
+
     console.log('--------' + find.length + '-------')
     if (find.length > 0) {
         var count = find.length;
@@ -69,7 +85,8 @@ module.exports.algo1 = async(req) => {
         response = await new Promise((resolve, reject) => {
             parser.parseString(html, async function(err, result) {
                 var cpy = result
-                console.log(result)
+                console.log(cpy)
+                console.log(String(cpy["body"]))
                 var doc = await algo1insertSiteMap(
                     cpy,
                     url,
@@ -310,6 +327,12 @@ const algo1insertArticle = async(result, main_url, url, length, req, lastDate) =
                     page: j + 1,
                 });
                 const doc = await articlemap.save();
+                try {
+                    const updateCount = await websiteInfoSchema.findOneAndUpdate({ sitemap_link: main_url }, { $inc: { website_count: 1 } })
+                        // console.log(updateCount)
+                } catch (e) {
+                    console.log(e)
+                }
                 console.log(counter);
                 // console.log(doc);
 
@@ -349,6 +372,11 @@ const algo1insertSiteMap = async(result, url, length) => {
             });
 
             const doc = await sitemap.save();
+            try {
+                const updateCount = await websiteInfoSchema.findOneAndUpdate({ sitemap_link: url }, { $inc: { sitemap_count: 1 } })
+            } catch (e) {
+                console.log(e)
+            }
             console.log(counter);
             // console.log(doc);
 
@@ -367,7 +395,8 @@ const algo1insertSiteMap = async(result, url, length) => {
 const fetchPage = async(url, n) => {
     try {
         const result = await axios.get(url);
-        //console.log(result.data)
+        console.log(url)
+            //console.log(result.data)
         return result.data;
     } catch (err) {
         if (n === 0) throw err;

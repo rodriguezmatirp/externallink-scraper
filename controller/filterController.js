@@ -4,7 +4,6 @@ const axios = require('axios')
 const articleSchema = require('../model/article')
 const masterSchema = require('../model/master')
 const sitemapSchema = require('../model/sitemap')
-const infoSchema = require('../model/websiteInfo')
 
 module.exports.add_ = async(url, type) => {
     try {

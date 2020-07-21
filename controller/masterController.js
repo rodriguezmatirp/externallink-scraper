@@ -26,7 +26,7 @@ module.exports.insert = async(req) => {
 };
 module.exports.getAll = async() => {
     try {
-        const doc = await masterSchema.find();
+        const doc = await masterSchema.find({});
         let err = null;
         return { status: true, result: doc, err: err };
     } catch (err) {

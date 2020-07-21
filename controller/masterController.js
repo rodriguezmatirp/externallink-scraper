@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 const masterSchema = require("../model/master");
 const articleSchema = require('../model/article')
 const sitemapSchema = require('../model/sitemap')
-const infoSchema = require('../model/websiteInfo')
 const axios = require('axios')
 
 const url = process.env.NODE_ENV === "production" ? "/api" : "http://localhost:3000";
@@ -15,12 +14,6 @@ module.exports.insert = async(req) => {
         if (fd == null) {
             const master = new masterSchema(req.body);
             const doc = await master.save();
-            const newInfo = new infoSchema({
-                main_link: req.body.title,
-                sitemap_link: req.body.link
-            })
-            await newInfo.save()
-            console.log(newInfo)
             let err = null;
             return { status: true, result: doc, err: err };
         }
@@ -69,5 +62,16 @@ module.exports.crawlAll_ = async() => {
     } catch (e) {
         console.log(e)
         return { status: false, err: e }
+    }
+}
+
+module.exports.WebsiteInfo = async() => {
+    try {
+        const info = await masterSchema.find({}).sort({ updatedAt: 'desc' })
+            // console.log(info)
+        return { doc: info }
+    } catch (e) {
+        console.log(e)
+        return { err: e, status: false }
     }
 }

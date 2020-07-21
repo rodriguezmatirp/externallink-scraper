@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 const masterSchema = require('../model/master')
 const articleSchema = require("../model/article");
 const sitemapSchema = require("../model/sitemap");
-const websiteInfoSchema = require('../model/websiteInfo')
 const axios = require("axios");
 var fs = require("fs");
 var xml2js = require("xml2js");
@@ -18,17 +17,13 @@ module.exports.algo1 = async(req) => {
     let message = "";
     let find = await sitemapSchema.find({ parent_link: url });
 
-    var findInfo = await websiteInfoSchema.findOne({ sitemap_link: url })
-    if (!findInfo) {
-        var masterDoc = await masterSchema.findOne({ link: url })
+    var updateMaster = await masterSchema.findOne({ link: url })
+    if (!updateMaster.updatedAt) {
         var articleDoc = await articleSchema.find({ main_link: url })
-        const findInfo = new websiteInfoSchema({
-            sitemap_link: url,
-            main_link: masterDoc.title,
+        var updateMaster = await masterSchema.findOneAndUpdate({ link: url }, {
             sitemap_count: find.length,
             website_count: articleDoc.length
         })
-        await findInfo.save()
     }
 
     console.log('--------' + find.length + '-------')
@@ -328,7 +323,7 @@ const algo1insertArticle = async(result, main_url, url, length, req, lastDate) =
                 });
                 const doc = await articlemap.save();
                 try {
-                    const updateCount = await websiteInfoSchema.findOneAndUpdate({ sitemap_link: main_url }, { $inc: { website_count: 1 } })
+                    const updateCount = await masterSchema.findOneAndUpdate({ link: main_url }, { $inc: { website_count: 1 } })
                         // console.log(updateCount)
                 } catch (e) {
                     console.log(e)
@@ -373,7 +368,7 @@ const algo1insertSiteMap = async(result, url, length) => {
 
             const doc = await sitemap.save();
             try {
-                const updateCount = await websiteInfoSchema.findOneAndUpdate({ sitemap_link: url }, { $inc: { sitemap_count: 1 } })
+                const updateCount = await masterSchema.findOneAndUpdate({ link: url }, { $inc: { sitemap_count: 1 } })
             } catch (e) {
                 console.log(e)
             }

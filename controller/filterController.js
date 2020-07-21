@@ -37,14 +37,3 @@ module.exports.deleteRestrict = async(link, type) => {
         return { err: e, status: false }
     }
 }
-
-module.exports.WebsiteInfo = async() => {
-    try {
-        const info = await infoSchema.find({}).sort({ updatedAt: 'desc' })
-            // console.log(info)
-        return { doc: info }
-    } catch (e) {
-        console.log(e)
-        return { err: e, status: false }
-    }
-}

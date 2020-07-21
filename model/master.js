@@ -4,8 +4,10 @@ const MasterSchema = new mongoose.Schema({
     title: { type: String, required: true, unique: true },
     link: { type: String, required: true, unique: true },
     algo: { type: String, required: true },
-    created_at: { type: Date, required: false, default: Date.now() },
-    updated_at: { type: Date, required: false }
+    sitemap_count: { type: Number, default: 0 },
+    website_count: { type: Number, default: 0 }
+}, {
+    timestamps: true
 });
 
 module.exports = Masters = mongoose.model("masters", MasterSchema);

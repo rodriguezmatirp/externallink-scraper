@@ -67,7 +67,7 @@ router.get('/restrict', async(req, res, next) => {
 })
 
 router.get('/info', async(req, res, next) => {
-    const response = await filterController.WebsiteInfo()
+    const response = await masterController.WebsiteInfo()
     if (response.err == null) {
         res.status(200).json({ result: response })
     } else {

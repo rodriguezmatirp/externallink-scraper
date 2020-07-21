@@ -45,10 +45,10 @@ module.exports.WebsiteInfo = async() => {
             result.push({ title: data.title, baseSitemap: data.link })
         })
         for (let data of result) {
-            var sitemaps = await sitemapSchema.countDocuments({ parent_link: data.baseSitemap })
-            data["sitemapCount"] = sitemaps
-            var websites = await articleSchema.countDocuments({ main_link: data.baseSitemap })
-            data["websiteCount"] = websites
+            var sitemaps = await sitemapSchema.find({ parent_link: data.baseSitemap })
+            data["sitemapCount"] = sitemaps.length
+            var websites = await articleSchema.find({ main_link: data.baseSitemap })
+            data["websiteCount"] = websites.length
             var lastUpdated = await articleSchema.find({ main_link: data.baseSitemap }).sort({ updated_at: 'desc' }).limit(1)
             if (lastUpdated[0] !== undefined) {
                 // console.log(lastUpdated[0])

@@ -66,11 +66,12 @@ module.exports.crawlAll_ = async() => {
     }
 }
 
-module.exports.WebsiteInfo = async() => {
+module.exports.WebsiteInfo = async(limit, skip) => {
     try {
-        const info = await masterSchema.find({}).sort({ updatedAt: 'desc' })
+        const meta = await masterSchema.find({})
+        const info = await masterSchema.find({}).sort({ updatedAt: 'desc' }).limit(limit).skip(skip)
             // console.log(info)
-        return { doc: info }
+        return { doc: info, meta: meta.length }
     } catch (e) {
         console.log(e)
         return { err: e, status: false }

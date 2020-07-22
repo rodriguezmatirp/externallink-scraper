@@ -68,7 +68,7 @@ router.get('/restrict', async(req, res, next) => {
 })
 
 router.get('/info', async(req, res, next) => {
-    const response = await masterController.WebsiteInfo()
+    const response = await masterController.WebsiteInfo(Number(req.query.limit), Number(req.query.skip))
     if (response.err == null) {
         res.status(200).json({ result: response })
     } else {

@@ -14,7 +14,7 @@ module.exports.updateDatabase = async() => {
                 website_count: website.length
             })
         }
-        return true
+        return { updated: masterBase }
     } catch (e) {
         console.log(e)
         return false

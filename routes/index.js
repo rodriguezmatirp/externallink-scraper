@@ -7,6 +7,7 @@ var statusController = require("../controller/statusController")
 var filterController = require('../controller/filterController')
 var userController = require('../controller/userController')
 var getDataController = require('../controller/getDataController')
+var UpdateData = require('../migration/updateData')
 const { allAuth } = require("../middlewares/auth");
 
 /* GET home page. */
@@ -173,6 +174,16 @@ router.get('/getData', async(req, res, next) => {
         // console.log(type + '---------' + start + '-----------' + end + '----------' + link)
     const response = await getDataController.get(link, type, start, end, skip, limit)
     res.status(200).json({ result: response })
+})
+
+router.get('/update', async(Req, res, next) => {
+    const response = await UpdateData.updateDatabase()
+    console.log(response)
+    if (response) {
+        res.status(200).send(response)
+    } else {
+        res.status(400).send(response)
+    }
 })
 
 router.get("/search", async(req, res, next) => {

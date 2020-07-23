@@ -17,10 +17,10 @@ module.exports.algo1 = async(req) => {
 
     var updateMaster = await masterSchema.findOne({ link: url })
     if (!updateMaster.updatedAt) {
-        var articleDoc = await articleSchema.find({ main_link: url })
+        var articleDoc = await articleSchema.count({ main_link: url })
         var updateMaster = await masterSchema.findOneAndUpdate({ link: url }, {
             sitemap_count: find.length,
-            website_count: articleDoc.length
+            website_count: articleDoc
         })
     }
 
@@ -401,4 +401,3 @@ var TitleSplitter = async(url) => {
 
     return split2[0];
 };
-``

@@ -3,16 +3,14 @@ const masterSchema = require('../model/master')
 const articleSchema = require("../model/article");
 const sitemapSchema = require("../model/sitemap");
 const axios = require("axios");
-var fs = require("fs");
 var xml2js = require("xml2js");
 var parser = new xml2js.Parser();
 var cheerio = require("cheerio");
-var re = require('regex')
 
 module.exports.algo1 = async(req) => {
     const url = req.body.url;
-    const html = await fetchPage(url, 6);
-    let response = false;
+    const html = await fetchPage(url, 6)
+    var response = false;
     let flag = false
     let message = "";
     let find = await sitemapSchema.find({ parent_link: url });
@@ -26,17 +24,16 @@ module.exports.algo1 = async(req) => {
         })
     }
 
-    console.log('--------' + find.length + '-------')
+    console.log("Sub-sitemaps to scrape : ", find.length)
     if (find.length > 0) {
         var count = find.length;
         console.log("Tables present in database");
 
         response = await new Promise((resolve, reject) => {
-            console.log("here comes 1");
             // console.log(html);
 
             parser.parseString(html, async function(err, result) {
-                console.log("here comnes2");
+                console.log("Parsing the page");
 
                 if (result["sitemapindex"]["sitemap"].length > count) {
                     console.log("Site Map Counter Greater than the database count!");
@@ -79,15 +76,14 @@ module.exports.algo1 = async(req) => {
         // for site map insertion//
         response = await new Promise((resolve, reject) => {
             parser.parseString(html, async function(err, result) {
-                var cpy = result
-                console.log(cpy)
-                console.log(String(cpy["body"]))
-                var doc = await algo1insertSiteMap(
-                    cpy,
-                    url,
-                    cpy["sitemapindex"]["sitemap"].length
-                );
-                flag = true
+                if (result !== undefined) {
+                    var doc = await algo1insertSiteMap(
+                        result,
+                        url,
+                        result["sitemapindex"]["sitemap"].length
+                    );
+                    flag = true
+                }
                 if (doc) {
                     message = "First Scrapping data inserted on sitemap!";
                     resolve(true);
@@ -302,8 +298,8 @@ const algo1insertArticle = async(result, main_url, url, length, req, lastDate) =
                 "link getting sctrached:- " + result["urlset"]["url"][i].loc[0]
             );
             if (result["urlset"]["url"][i].loc[0].includes(".com/tag/")) continue
-                // else {
-            else if (lastDate <= new Date(result["urlset"]["url"][i].lastmod[0])) {
+            else {
+                // else if (lastDate <= new Date(result["urlset"]["url"][i].lastmod[0])) {
                 arr.push({ link: result["urlset"]["url"][i].loc[0], page: i + 1 });
                 const html = await fetchPage(result["urlset"]["url"][i].loc[0], 6);
                 var filterTitle = await TitleSplitter(req.body.url);
@@ -321,19 +317,16 @@ const algo1insertArticle = async(result, main_url, url, length, req, lastDate) =
                     lastmod: result["urlset"]["url"][i].lastmod[0],
                     page: j + 1,
                 });
-                const doc = await articlemap.save();
-                try {
-                    const updateCount = await masterSchema.findOneAndUpdate({ link: main_url }, { $inc: { website_count: 1 } })
-                        // console.log(updateCount)
-                } catch (e) {
-                    console.log(e)
-                }
-                console.log(counter);
-                // console.log(doc);
 
-                if (doc) {
-                    counter = counter + 1;
+                try {
+                    await articlemap.save();
+                    await masterSchema.findOneAndUpdate({ link: main_url }, { $inc: { website_count: 1 } })
+                    counter += 1;
+                } catch (e) {
+                    // console.log(e)
                 }
+
+                console.log(counter);
                 if (counter == length) {
                     return true;
                 }
@@ -366,18 +359,15 @@ const algo1insertSiteMap = async(result, url, length) => {
                 page: i + 1,
             });
 
-            const doc = await sitemap.save();
             try {
-                const updateCount = await masterSchema.findOneAndUpdate({ link: url }, { $inc: { sitemap_count: 1 } })
+                await sitemap.save();
+                await masterSchema.findOneAndUpdate({ link: url }, { $inc: { sitemap_count: 1 } })
+                counter += 1
             } catch (e) {
                 console.log(e)
             }
             console.log(counter);
             // console.log(doc);
-
-            if (doc) {
-                counter = counter + 1;
-            }
             if (counter == length) {
                 return true;
             }

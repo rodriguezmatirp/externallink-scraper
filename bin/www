@@ -7,10 +7,6 @@
 var app = require('../app');
 var debug = require('debug')('scrapper:server');
 var http = require('http');
-require('../scheduler/schedule')
-var update = require('../migration/updateData')
-
-const res = update.updateDatabase()
 
 /**
  * Get port from environment and store in Express.

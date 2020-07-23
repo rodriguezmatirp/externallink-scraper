@@ -41,6 +41,11 @@ app.use(bodyParser.urlencoded({ extended: false }));
 //load Schema
 const User = require("./model/user");
 
+// Automated crawling of sitemaps
+const Scheduler = require('./scheduler/schedule')
+setTimeout(Scheduler.crawlerLoop, 20000)
+setTimeout(Scheduler.schedulerLoop, 10000)
+
 //Routes
 app.use("/", indexRouter);
 app.use("/users", userController);

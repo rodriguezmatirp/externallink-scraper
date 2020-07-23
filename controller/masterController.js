@@ -3,8 +3,8 @@ const masterSchema = require("../model/master");
 const articleSchema = require('../model/article')
 const sitemapSchema = require('../model/sitemap')
 const axios = require('axios')
+const Scheduler = require('../scheduler/schedule')
 
-const url = process.env.NODE_ENV === "production" ? "/api" : "http://localhost:3000";
 
 module.exports.insert = async(req) => {
     try {
@@ -37,9 +37,9 @@ module.exports.getAll = async() => {
 
 module.exports.deleteLink = async(url) => {
     try {
-        const master = await masterSchema.findOneAndDelete({ link: url })
-        const sitemaps = await sitemapSchema.deleteMany({ parent_link: url })
-        const article = await articleSchema.deleteMany({ main_link: url })
+        await masterSchema.findOneAndDelete({ link: url })
+        await sitemapSchema.deleteMany({ parent_link: url })
+        await articleSchema.deleteMany({ main_link: url })
         return { status: true }
     } catch (err) {
         return { status: false, err: err }
@@ -48,17 +48,13 @@ module.exports.deleteLink = async(url) => {
 
 module.exports.crawlAll_ = async() => {
     try {
-        console.log('----------------------')
-        const sitemapData = await masterSchema.find({})
-        for (let data of sitemapData) {
-            console.log(data.link)
-            try {
-                await axios.post(`${url}/algo1`, { url: data.link })
-            } catch (e) {
-                console.log(e + '-----------------------------' + data.link)
-            }
-            // console.log(res)
-        }
+        console.log("TaskList before Adding: ", Scheduler.tasksList)
+        var temp = await masterSchema.find({})
+        temp.forEach((item) => {
+            if (!Scheduler.tasksList.includes(item["link"]))
+                Scheduler.tasksList.push(item["link"])
+        })
+        console.log("TaskList after Adding: ", Scheduler.tasksList)
         return { status: true }
     } catch (e) {
         console.log(e)

@@ -1,28 +1,50 @@
 const mongoose = require('mongoose')
 const master = require('../model/master')
-const axios = require('axios')
-const cron = require('node-cron')
 
-const url = process.env.NODE_ENV === "production" ? "/api" : "http://localhost:3000";
+const algo1 = require('../controller/algo1Controller')
 
-var control = cron.schedule('00 01 00 * * *', async() => {
-    try {
-        var now = new Date().toLocaleTimeString()
-        console.log('Scheduler works ---' + now)
-        const sitemaps = await master.find({})
-        for (let sitemap of sitemaps) {
-            var sitemap_ = sitemap["link"]
-            try {
-                await axios.post(`${url}/algo1`, { url: sitemap_ })
-            } catch (e) {
-                console.log(e + '------------------' + sitemap_)
-            }
+const sitemaps = [] // Used to maintain a list of sitemaps
+
+module.exports.tasksList = tasksList = []
+
+// Crawler loop crawls URLs from tasklist
+module.exports.crawlerLoop = crawler = async() => {
+    console.error("Crawler Tasks: ", tasksList)
+
+    var tasksLength = tasksList.length ? tasksList.length : 0;
+    if (tasksLength !== 0) {
+        var taskURL = tasksList.shift()
+        try {
+            await algo1.algo1({ body: { url: taskURL } })
+            console.log('Crawled ' + taskURL + ' - from CrawlerLoop')
+            setTimeout(crawler, 20000, tasksList);
+        } catch (e) {
+            console.error("Crawler Error for  : ", e)
+            setTimeout(crawler, 2000, tasksList)
         }
-    } catch (err) {
-        console.log(err)
+    } else {
+        console.error('No URLs to crawl')
+        setTimeout(crawler, 20000, tasksList);
     }
-}, {
-    scheduled: true
-})
+}
 
-control.start()
+// Scheduler loop schedules crawl tasks into tasklist
+module.exports.schedulerLoop = scheduleTask = async() => {
+    console.log("Scheduled Tasks: ", tasksList)
+
+    if (sitemaps.length == 0) {
+        var temp = await master.find({})
+        temp.forEach((item) => { sitemaps.push(item) })
+    }
+    var sitemap = sitemaps.shift()
+    var sitemapURL = sitemap["link"]
+
+    if (!tasksList.includes(sitemapURL)) {
+        tasksList.push(sitemapURL)
+        console.log('Scheduled ' + sitemapURL + ' to be crawled!')
+        setTimeout(scheduleTask, 120000, tasksList);
+    } else {
+        console.log('Skipping ' + sitemapURL + ' from scheduling!')
+        setTimeout(scheduleTask, 60000, tasksList);
+    }
+}

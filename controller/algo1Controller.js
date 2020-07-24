@@ -261,7 +261,7 @@ var htmlParser = async(html, filter) => {
             if (title != undefined) {
                 let upper = title.toUpperCase();
                 let filterTitle = filter.toUpperCase();
-                console.log("title: -" + title);
+                // console.log("title: -" + title);
 
                 if (
                     title.charAt(0) != "/" &&

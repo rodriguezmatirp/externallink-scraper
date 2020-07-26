@@ -9,6 +9,32 @@ var bodyParser = require("body-parser");
 var indexRouter = require("./routes/index");
 var userController = require("./routes/user");
 const serveIndex = require('serve-index');
+const tunnel = require('tunnel-ssh')
+
+// var config = {
+//     username: 'root',
+//     host: '139.59.94.64',
+//     agent: process.env.SSH_AUTH_SOCK,
+//     privateKey: require('fs').readFileSync('C:\\Users\\user\\.ssh\\id_rsa'),
+//     port: 22,
+//     dstPort: 27017
+//         // password:'mypassword'
+// };
+// var db;
+
+// var server = tunnel(config, function(error, server) {
+//     if (error) {
+//         console.log("SSH connection error: " + error);
+//     }
+//     mongoose.connect('mongodb://localhost:27017/test', { useFindAndModify: false, useNewUrlParser: true, useCreateIndex: true });
+
+//     db = mongoose.connection;
+//     db.on('error', console.error.bind(console, 'DB connection error:'));
+//     db.once('open', function() {
+//         // we're connected!
+//         console.log("DB connection successful");
+//     });
+// });
 
 var app = express();
 db = async() => {

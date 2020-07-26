@@ -297,7 +297,7 @@ const algo1insertArticle = async(result, main_url, url, length, req, lastDate) =
             console.log(
                 "link getting sctrached:- " + result["urlset"]["url"][i].loc[0]
             );
-            if (result["urlset"]["url"][i].loc[0].includes(".com/tag/")) continue
+            if (result["urlset"]["url"][i].loc[0].includes(".com/tag/") || result["urlset"]["url"][i].loc[0].includes(".com/category")) continue
             else {
                 // else if (lastDate <= new Date(result["urlset"]["url"][i].lastmod[0])) {
                 arr.push({ link: result["urlset"]["url"][i].loc[0], page: i + 1 });

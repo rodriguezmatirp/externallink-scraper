@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const masterSchema = require('../model/master')
 const articleSchema = require("../model/article");
 const sitemapSchema = require("../model/sitemap");
+const externalLinkSchema = require('../model/externalLink')
 const axios = require("axios");
 var xml2js = require("xml2js");
 var parser = new xml2js.Parser();
@@ -15,14 +16,14 @@ module.exports.algo1 = async(req) => {
     let message = "";
     let find = await sitemapSchema.find({ parent_link: url });
 
-    var updateMaster = await masterSchema.findOne({ link: url })
-    if (!updateMaster.updatedAt) {
-        var articleDoc = await articleSchema.count({ main_link: url })
-        var updateMaster = await masterSchema.findOneAndUpdate({ link: url }, {
-            sitemap_count: find.length,
-            website_count: articleDoc
-        })
-    }
+    // var updateMaster = await masterSchema.findOne({ link: url })
+    // if (!updateMaster.updatedAt) {
+    //     var articleDoc = await articleSchema.count({ main_link: url })
+    //     var updateMaster = await masterSchema.findOneAndUpdate({ link: url }, {
+    //         sitemap_count: find.length,
+    //         website_count: articleDoc
+    //     })
+    // }
 
     console.log("Sub-sitemaps to scrape : ", find.length)
     if (find.length > 0) {
@@ -270,14 +271,16 @@ var htmlParser = async(html, filter) => {
                     title.indexOf("javascript:void") == -1
                 ) {
                     arr.push({ rel: rel, link: title, text: text });
-
+                    // console.log(title)
                 }
             }
         }
     });
     // console.log(arr);
+
     return arr;
 };
+
 
 const algo1insertArticle = async(result, main_url, url, length, req, lastDate) => {
     try {
@@ -294,12 +297,12 @@ const algo1insertArticle = async(result, main_url, url, length, req, lastDate) =
         var j = 0;
         var arr = [];
         for (i = 0; i < length; i++) {
-            console.log(
-                "link getting sctrached:- " + result["urlset"]["url"][i].loc[0]
-            );
             if (result["urlset"]["url"][i].loc[0].includes(".com/tag/") || result["urlset"]["url"][i].loc[0].includes(".com/category")) continue
             else {
                 // else if (lastDate <= new Date(result["urlset"]["url"][i].lastmod[0])) {
+                console.log(
+                    "link getting sctrached:- " + result["urlset"]["url"][i].loc[0]
+                );
                 arr.push({ link: result["urlset"]["url"][i].loc[0], page: i + 1 });
                 const html = await fetchPage(result["urlset"]["url"][i].loc[0], 6);
                 var filterTitle = await TitleSplitter(req.body.url);
@@ -308,6 +311,7 @@ const algo1insertArticle = async(result, main_url, url, length, req, lastDate) =
                 external.forEach((arr) => {
                     arr.status = false
                 })
+
                 const articlemap = new articleSchema({
                     main_link: main_url,
                     parent_link: url,
@@ -320,6 +324,9 @@ const algo1insertArticle = async(result, main_url, url, length, req, lastDate) =
 
                 try {
                     await articlemap.save();
+                    for (let data of external) {
+                        saveUniqueExtLink(data.link, result["urlset"]["url"][i].loc[0], result["urlset"]["url"][i].lastmod[0])
+                    }
                     await masterSchema.findOneAndUpdate({ link: main_url }, { $inc: { website_count: 1 } })
                     counter += 1;
                 } catch (e) {
@@ -339,6 +346,30 @@ const algo1insertArticle = async(result, main_url, url, length, req, lastDate) =
         return false;
     }
 };
+
+
+const saveUniqueExtLink = async(title, article_link, lastmod) => {
+    let externalLink = title.match(/(https|http):\/\/(.[^/]+)/)[0]
+        // console.log(externalLink[0])
+    var newLink = new externalLinkSchema({
+        externalLink: externalLink,
+        article_link: article_link,
+        lastmod: lastmod
+    })
+    try {
+        var oldLink = await externalLinkSchema.findOne({ externalLink: externalLink })
+        if (oldLink) {
+            await externalLinkSchema.findOneAndUpdate({ externalLink }, { $inc: { externalLink_count: 1 } })
+            console.log('Incrementing external link ' + externalLink)
+        } else {
+            await newLink.save()
+            console.log('Adding external link ' + externalLink)
+        }
+    } catch (e) {
+        console.log(e)
+    }
+}
+
 
 const algo1insertSiteMap = async(result, url, length) => {
     try {
@@ -401,3 +432,4 @@ var TitleSplitter = async(url) => {
 
     return split2[0];
 };
+``

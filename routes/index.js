@@ -7,6 +7,7 @@ var statusController = require("../controller/statusController")
 var filterController = require('../controller/filterController')
 var userController = require('../controller/userController')
 var getDataController = require('../controller/getDataController')
+var externalLinkController = require('../controller/externalLinkController')
 var UpdateData = require('../migration/updateData')
 const { allAuth } = require("../middlewares/auth");
 
@@ -174,6 +175,22 @@ router.get('/getData', async(req, res, next) => {
         // console.log(type + '---------' + start + '-----------' + end + '----------' + link)
     const response = await getDataController.get(link, type, start, end, skip, limit)
     res.status(200).json({ result: response })
+})
+
+router.get('/getExtLink', async(req, res, next) => {
+    const limit = req.query.limit
+    const skip = req.query.skip
+    const start = req.query.start
+    const end = req.query.end
+    const response = await externalLinkController.get(start, end, skip, limit)
+    res.status(200).json(response)
+})
+
+router.get('/verify', async(req, res, next) => {
+    const link = req.query.link
+    const status = req.query.status
+    const response = await externalLinkController.status(link, status)
+    res.status(200).json(response)
 })
 
 router.get('/update', async(Req, res, next) => {

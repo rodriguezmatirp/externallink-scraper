@@ -4,6 +4,7 @@ const articleSchema = require('../model/article')
 const sitemapSchema = require('../model/sitemap')
 const axios = require('axios')
 const Scheduler = require('../scheduler/schedule')
+const externalLinkSchema = require('../model/externalLink')
 
 
 module.exports.insert = async(req) => {
@@ -40,6 +41,7 @@ module.exports.deleteLink = async(url) => {
         await masterSchema.findOneAndDelete({ link: url })
         await sitemapSchema.deleteMany({ parent_link: url })
         await articleSchema.deleteMany({ main_link: url })
+        await externalLinkSchema.deleteMany({ sitemap_link: url })
         return { status: true }
     } catch (err) {
         return { status: false, err: err }
@@ -65,7 +67,7 @@ module.exports.crawlAll_ = async() => {
 module.exports.WebsiteInfo = async(limit, skip) => {
     try {
         const meta = await masterSchema.find({})
-        const info = await masterSchema.find({}).sort({ updatedAt: 'desc' }).limit(limit).skip(skip)
+        const info = await masterSchema.find({}).sort({ website_count: 'desc' }).limit(limit).skip(skip)
             // console.log(info)
         return { doc: info, meta: meta.length }
     } catch (e) {

@@ -325,7 +325,7 @@ const algo1insertArticle = async(result, main_url, url, length, req) => {
                 try {
                     await articlemap.save();
                     for (let data of external) {
-                        saveUniqueExtLink(data.link, result["urlset"]["url"][i].loc[0], result["urlset"]["url"][i].lastmod[0])
+                        saveUniqueExtLink(data.link, main_url, data.rel, result["urlset"]["url"][i].loc[0], result["urlset"]["url"][i].lastmod[0])
                     }
                     await masterSchema.findOneAndUpdate({ link: main_url }, { $inc: { website_count: 1 } })
                     counter += 1;
@@ -348,25 +348,27 @@ const algo1insertArticle = async(result, main_url, url, length, req) => {
 };
 
 
-const saveUniqueExtLink = async(title, article_link, lastmod) => {
-    let externalLink = title.match(/(https|http):\/\/(.[^/]+)/)[0]
+const saveUniqueExtLink = async(title, sitemap, rel, article_link, lastmod) => {
+    let externalLink_ = title.match(/(http|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))/)[0]
         // console.log(externalLink[0])
-    var newLink = new externalLinkSchema({
-        externalLink: externalLink,
-        article_link: article_link,
-        lastmod: lastmod
-    })
     try {
-        var oldLink = await externalLinkSchema.findOne({ externalLink: externalLink })
-        if (oldLink) {
-            await externalLinkSchema.findOneAndUpdate({ externalLink }, { $inc: { externalLink_count: 1 } })
-            console.log('Incrementing external link ' + externalLink)
-        } else {
-            await newLink.save()
-            console.log('Adding external link ' + externalLink)
-        }
+        var newLink = new externalLinkSchema({
+            externalLink: externalLink_,
+            article_link: article_link,
+            lastmod: lastmod,
+            rel: rel,
+            sitemap_link: sitemap
+        })
+        await newLink.save()
+        console.log('Adding external link ' + externalLink_)
     } catch (e) {
-        console.log(e)
+        if (e.code === 11000) {
+            await externalLinkSchema.findOneAndUpdate({ externalLink: externalLink_ }, { $inc: { externalLink_count: 1 } })
+            console.log('Incrementing external link ' + externalLink_)
+        } else {
+            console.log('Error : website ---' + externalLink_ + e)
+        }
+        // console.log("Found duplicate External Links -- " + externalLink_)
     }
 }
 

@@ -12,10 +12,9 @@ module.exports.crawlerLoop = crawler = async() => {
     console.log("Crawler Tasks: ", tasksList)
 
     var tasksLength = tasksList.length ? tasksList.length : 0;
-    if (tasksLength !== 0) {
+    if (tasksLength !== 0 && this.tasksList !== undefined) {
         var taskURL = tasksList.shift()
         try {
-
             await algo1.algo1({ body: { url: taskURL } })
             console.log('Crawled ' + taskURL + ' - from CrawlerLoop')
             setTimeout(crawler, 20000, tasksList);
@@ -38,8 +37,12 @@ module.exports.schedulerLoop = scheduleTask = async() => {
         temp.forEach((item) => { sitemaps.push(item) })
     }
     var sitemap = sitemaps.shift()
-    var sitemapURL = sitemap["link"]
-
+    if (sitemap !== undefined) {
+        var sitemapURL = sitemap["link"]
+    } else {
+        console.log('No websites to schedule')
+        setTimeout(scheduleTask, 240000, this.tasksList)
+    }
     if (!tasksList.includes(sitemapURL)) {
         tasksList.push(sitemapURL)
         console.log('Scheduled ' + sitemapURL + ' to be crawled!')

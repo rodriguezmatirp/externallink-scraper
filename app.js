@@ -26,7 +26,7 @@ const tunnel = require('tunnel-ssh')
 //     if (error) {
 //         console.log("SSH connection error: " + error);
 //     }
-//     mongoose.connect('mongodb://localhost:27017/test', { useFindAndModify: false, useNewUrlParser: true, useCreateIndex: true });
+//     mongoose.connect('mongodb://localhost:27017/scrapper', { useFindAndModify: false, useNewUrlParser: true, useCreateIndex: true });
 
 //     db = mongoose.connection;
 //     db.on('error', console.error.bind(console, 'DB connection error:'));

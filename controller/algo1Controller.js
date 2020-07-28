@@ -147,7 +147,7 @@ module.exports.algo1 = async(req) => {
             } else {
                 var url = find[i].link;
 
-                var lastData = await articleSchema.find({ main_link: req.body.url }).sort({ lastmod: 'desc' })
+                // var lastData = await articleSchema.find({ main_link: req.body.url }).sort({ lastmod: 'desc' })
 
                 // console.log(lastData + '--------------------------------------------------')
 
@@ -165,8 +165,8 @@ module.exports.algo1 = async(req) => {
                                 req.body.url,
                                 url,
                                 result["urlset"]["url"].length - count,
-                                req,
-                                lastData[0].lastmod
+                                req
+                                // lastData[0].lastmod
                             );
                             if (doc) {
                                 const update = await sitemapSchema.findOneAndUpdate({ link: url }, { status: 0 });
@@ -282,16 +282,16 @@ var htmlParser = async(html, filter) => {
 };
 
 
-const algo1insertArticle = async(result, main_url, url, length, req, lastDate) => {
+const algo1insertArticle = async(result, main_url, url, length, req) => {
     try {
         var links = result["urlset"]["url"];
         console.log("no of articles to be scratched:- " + length);
-        if (!lastDate) {
-            lastDate = new Date(2010, 00, 00)
-        } else {
-            lastDate = new Date(lastDate)
-        }
-        console.log(lastDate)
+        // if (!lastDate) {
+        //     lastDate = new Date(2010, 00, 00)
+        // } else {
+        //     lastDate = new Date(lastDate)
+        // }
+        // console.log(lastDate)
         var i = 0;
         var counter = 0;
         var j = 0;

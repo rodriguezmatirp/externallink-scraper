@@ -1,7 +1,6 @@
 var express = require("express");
 var router = express.Router();
 var algo1Controller = require("../controller/algo1Controller");
-var getController = require("../controller/getController");
 var masterController = require("../controller/masterController");
 var statusController = require("../controller/statusController")
 var filterController = require('../controller/filterController')
@@ -69,7 +68,11 @@ router.get('/restrict', async(req, res, next) => {
 })
 
 router.get('/info', async(req, res, next) => {
-    const response = await masterController.WebsiteInfo(Number(req.query.limit), Number(req.query.skip))
+    const limit = req.query.limit
+    const skip = req.query.skip
+    const sort = req.query.sort
+    const type = req.query.type
+    const response = await masterController.WebsiteInfo(limit, skip, sort, type)
     if (response.err == null) {
         res.status(200).json({ result: response })
     } else {
@@ -119,52 +122,6 @@ router.get("/master", async(req, res, next) => {
     res.status(200).json(response);
 });
 
-router.get("/get/algo1", async(req, res, next) => {
-    console.log(req.query.site);
-    var link = req.query.site;
-    var skip = req.query.skip;
-    var limit = req.query.limit;
-    console.log(limit);
-    console.log(skip);
-
-    const response = await getController.get(link, skip, limit);
-
-    if (response.err == null) {
-        res.status(200).json({ doc: response });
-    } else {
-        res.status(400).json(response);
-    }
-});
-
-router.get("/get/Date", async(req, res, next) => {
-    console.log(req.query.site);
-    var link = req.query.site;
-    var start = req.query.start;
-    var end = req.query.end;
-    console.log(start);
-    console.log(end);
-
-    const response = await getController.getByDate(link, start, end, req, res);
-
-    if (response.err == null) {
-        res.status(200).json({ doc: response });
-    } else {
-        res.status(400).json(response);
-    }
-});
-
-router.get("/get/follow", async(req, res, next) => {
-    console.log(req.query.site);
-    var link = req.query.site;
-    var start = req.query.start;
-    var end = req.query.end;
-    console.log(start);
-    console.log(end);
-
-    const response = await getController.getdoFollowByDate(req, res);
-    // console.log(response)
-});
-
 router.get('/getData', async(req, res, next) => {
     const type = req.query.type
     const link = req.query.link
@@ -182,7 +139,10 @@ router.get('/getExtLink', async(req, res, next) => {
     const skip = req.query.skip
     const start = req.query.start
     const end = req.query.end
-    const response = await externalLinkController.get(start, end, skip, limit)
+    const sort = req.query.sort
+    const type = req.query.type
+    const showOnly = req.query.showOnly
+    const response = await externalLinkController.get(start, end, skip, limit, sort, type, showOnly)
     res.status(200).json(response)
 })
 

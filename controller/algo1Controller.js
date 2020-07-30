@@ -16,15 +16,6 @@ module.exports.algo1 = async(req) => {
     let message = "";
     let find = await sitemapSchema.find({ parent_link: url });
 
-    // var updateMaster = await masterSchema.findOne({ link: url })
-    // if (!updateMaster.updatedAt) {
-    //     var articleDoc = await articleSchema.count({ main_link: url })
-    //     var updateMaster = await masterSchema.findOneAndUpdate({ link: url }, {
-    //         sitemap_count: find.length,
-    //         website_count: articleDoc
-    //     })
-    // }
-
     console.log("Sub-sitemaps to scrape : ", find.length)
     if (find.length > 0) {
         var count = find.length;
@@ -325,7 +316,7 @@ const algo1insertArticle = async(result, main_url, url, length, req) => {
                 try {
                     await articlemap.save();
                     for (let data of external) {
-                        saveUniqueExtLink(data.link, main_url, data.rel, result["urlset"]["url"][i].loc[0], result["urlset"]["url"][i].lastmod[0])
+                        saveUniqueExtLink(data.link, data.text, main_url, data.rel, result["urlset"]["url"][i].loc[0], result["urlset"]["url"][i].lastmod[0])
                     }
                     await masterSchema.findOneAndUpdate({ link: main_url }, { $inc: { website_count: 1 } })
                     counter += 1;
@@ -348,28 +339,39 @@ const algo1insertArticle = async(result, main_url, url, length, req) => {
 };
 
 
-const saveUniqueExtLink = async(title, sitemap, rel, article_link, lastmod) => {
-    let externalLink_ = title.match(/(http|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))/)[0]
-        // console.log(externalLink[0])
-    try {
-        var newLink = new externalLinkSchema({
-            externalLink: externalLink_,
-            article_link: article_link,
-            lastmod: lastmod,
-            rel: rel,
-            sitemap_link: sitemap
-        })
-        await newLink.save()
-        console.log('Adding external link ' + externalLink_)
-    } catch (e) {
-        if (e.code === 11000) {
-            await externalLinkSchema.findOneAndUpdate({ externalLink: externalLink_ }, { $inc: { externalLink_count: 1 } })
-            console.log('Incrementing external link ' + externalLink_)
-        } else {
-            console.log('Error : website ---' + externalLink_ + e)
+const saveUniqueExtLink = async(title, text, sitemap, rel, article_link, lastmod) => {
+    if (title !== null) {
+        var externalLink_ = title.match(/(http|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))/)
+        if (externalLink_) {
+            try {
+                if (rel === undefined) {
+                    rel = "dofollow"
+                } else if (rel.includes("nofollow")) {
+                    rel = "nofollow"
+                }
+                var newLink = new externalLinkSchema({
+                    externalLink: externalLink_[0],
+                    article_link: article_link,
+                    lastmod: lastmod,
+                    rel: rel,
+                    sitemap_link: sitemap,
+                    external_url: title,
+                    anchor_text: text
+                })
+                await newLink.save()
+                console.log('Adding external link ' + externalLink_)
+            } catch (e) {
+                if (e.code === 11000) {
+                    await externalLinkSchema.findOneAndUpdate({ externalLink: externalLink_ }, { $inc: { externalLink_count: 1 } })
+                    console.log('Incrementing external link ' + externalLink_)
+                } else {
+                    console.log('Error : website ---' + externalLink_ + e)
+                }
+                // console.log("Found duplicate External Links -- " + externalLink_)
+            }
         }
-        // console.log("Found duplicate External Links -- " + externalLink_)
     }
+    // console.log(externalLink[0])
 }
 
 

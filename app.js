@@ -40,7 +40,15 @@ var app = express();
 db = async() => {
     try {
         const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/scrapper'
-        const con = await mongoose.connect(mongoUri, { useFindAndModify: true, useNewUrlParser: true, useCreateIndex: true });
+        const con = await mongoose.connect(mongoUri, {
+            useFindAndModify: true,
+            useNewUrlParser: true,
+            useCreateIndex: true,
+            autoReconnect: true,
+            reconnectTries: Number.MAX_VALUE,
+            reconnectInterval: 1000,
+            poolSize: 10
+        });
         if (con) {
             console.log("Connected Successfull !");
         }
@@ -65,7 +73,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(bodyParser.urlencoded({ extended: false }));
 
 //load Schema
-const User = require("./model/user");
+require("./model/user");
 
 // Automated crawling of sitemaps
 const Scheduler = require('./scheduler/schedule')

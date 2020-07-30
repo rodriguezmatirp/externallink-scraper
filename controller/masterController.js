@@ -5,6 +5,8 @@ const sitemapSchema = require('../model/sitemap')
 const axios = require('axios')
 const Scheduler = require('../scheduler/schedule')
 const externalLinkSchema = require('../model/externalLink')
+const algo1 = require('../controller/algo1Controller')
+const fs = require('fs')
 
 
 module.exports.insert = async(req) => {
@@ -50,28 +52,73 @@ module.exports.deleteLink = async(url) => {
 
 module.exports.crawlAll_ = async() => {
     try {
-        console.log("TaskList before Adding: ", Scheduler.tasksList)
         var temp = await masterSchema.find({})
-        temp.forEach((item) => {
-            if (!Scheduler.tasksList.includes(item["link"]))
-                Scheduler.tasksList.push(item["link"])
-        })
-        console.log("TaskList after Adding: ", Scheduler.tasksList)
+            // temp.forEach((item) => {
+            //     if (!Scheduler.tasksList.includes(item["link"]))
+            //         Scheduler.tasksList.push(item["link"])
+            // })
+            // console.log("TaskList after Adding: ", Scheduler.tasksList)
+        for (item of temp) {
+            await algo1.algo1({ body: { url: item.link } })
+        }
         return { status: true }
     } catch (e) {
-        console.log(e)
+        console.error(e)
         return { status: false, err: e }
     }
 }
 
-module.exports.WebsiteInfo = async(limit, skip) => {
+module.exports.WebsiteInfo = async(limit, skip, sort, type) => {
+    // Input Sanitization
+    sort = Number(sort) ? Number(sort) : -1
+    skip = Number(skip) ? Number(skip) : 0
+    limit = Number(limit) ? Number(limit) : 0
+
+    var sortCondition = {}
+
     try {
-        const meta = await masterSchema.find({})
-        const info = await masterSchema.find({}).sort({ website_count: 'desc' }).limit(limit).skip(skip)
-            // console.log(info)
-        return { doc: info, meta: meta.length }
+        if (type) {
+            if (type == 'websiteCount')
+                sortCondition['website_count'] = sort
+            else if (type == 'dateWise')
+                sortCondition['updatedAt'] = sort
+        }
+        const count = await masterSchema.count()
+        const info = await masterSchema.find()
+            .sort(sortCondition)
+            .limit(limit)
+            .skip(skip)
+
+        return { doc: info, meta: count }
     } catch (e) {
-        console.log(e)
+        console.error(e)
         return { err: e, status: false }
     }
 }
+
+//Auto add the sitemap
+module.exports.autoAdd = autoAdd = async() => {
+    var list = []
+    let data = fs.readFileSync('./controller/sitemaps.json', 'utf-8')
+    list = JSON.parse(data)
+    for (item in list) {
+        if (item >= 50) {
+            break
+        }
+        var extracted_title = list[item].match(/:\/\/(.[^/]+)/)[1]
+        const newSite = new masterSchema({
+            link: list[item],
+            title: extracted_title,
+            algo: 1
+        })
+        try {
+            await newSite.save()
+            await algo1.algo1({ body: list[item] })
+            console.log('Saved  : ', item.link)
+        } catch (e) {
+            console.log('Sitemap already present in database')
+        }
+    }
+}
+
+// autoAdd()

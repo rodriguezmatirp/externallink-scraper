@@ -315,10 +315,10 @@ const algo1insertArticle = async(result, main_url, url, length, req) => {
 
                 try {
                     await articlemap.save();
+                    await masterSchema.findOneAndUpdate({ link: main_url }, { $inc: { website_count: 1 } })
                     for (let data of external) {
                         saveUniqueExtLink(data.link, data.text, main_url, data.rel, result["urlset"]["url"][i].loc[0], result["urlset"]["url"][i].lastmod[0])
                     }
-                    await masterSchema.findOneAndUpdate({ link: main_url }, { $inc: { website_count: 1 } })
                     counter += 1;
                 } catch (e) {
                     // console.log(e)

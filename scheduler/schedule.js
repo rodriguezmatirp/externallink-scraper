@@ -13,7 +13,7 @@ module.exports.tasksList = tasksList = []
 module.exports.crawlerLoop = crawler = async() => {
     console.log("Crawler Tasks: ", tasksList)
     if (crawlerFlag) {
-        setTimeout(crawler, 10000, task)
+        setTimeout(crawler, 10000, tasksList)
         crawlerSkipCounter += 1
         if (crawlerSkipCounter >= 30) {
             crawlerFlag = false
@@ -31,6 +31,7 @@ module.exports.crawlerLoop = crawler = async() => {
             crawlerFlag = false
             console.log('Crawled ' + taskURL + ' - from CrawlerLoop')
         } catch (e) {
+            crawlerFlag = false
             console.log("Crawler Error for  : ", taskURL + " " + e)
         }
     } else {
@@ -43,7 +44,7 @@ module.exports.crawlerLoop = crawler = async() => {
 module.exports.schedulerLoop = scheduleTask = async() => {
     console.log("Scheduled Tasks: ", tasksList)
     if (sitemaps.length == 0) {
-        var temp = await master.find()
+        var temp = await master.find({ blocked: false })
             .sort({ updatedAt: 1 })
         temp.forEach((item) => { sitemaps.push(item) })
     }

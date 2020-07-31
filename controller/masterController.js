@@ -52,7 +52,7 @@ module.exports.deleteLink = async(url) => {
 
 module.exports.crawlAll_ = async() => {
     try {
-        var temp = await masterSchema.find({})
+        var temp = await masterSchema.find({ blocked: false })
             // temp.forEach((item) => {
             //     if (!Scheduler.tasksList.includes(item["link"]))
             //         Scheduler.tasksList.push(item["link"])

@@ -25,7 +25,7 @@ module.exports.algo1 = async(req) => {
             // console.log(html);
 
             parser.parseString(html, async function(err, result) {
-                console.log("Parsing the page");
+                // console.log("Parsing the page");
 
                 if (result["sitemapindex"]["sitemap"].length > count) {
                     console.log("Site Map Counter Greater than the database count!");
@@ -64,17 +64,21 @@ module.exports.algo1 = async(req) => {
         });
         // console.log("response", response);
     } else {
-        console.log("here comes 2");
+        console.log("Sub-sitemaps Not yet added !");
         // for site map insertion//
         response = await new Promise((resolve, reject) => {
             parser.parseString(html, async function(err, result) {
-                if (result !== undefined) {
+                if (result !== undefined && result["sitemapIndex"] !== undefined) {
                     var doc = await algo1insertSiteMap(
                         result,
                         url,
                         result["sitemapindex"]["sitemap"].length
                     );
                     flag = true
+                } else {
+                    console.error('Cannot crawl website ' + url)
+                    console.log('Added to Exceptional Websites')
+                    await masterSchema.findOneAndUpdate({ link: url }, { blocked: true })
                 }
                 if (doc) {
                     message = "First Scrapping data inserted on sitemap!";

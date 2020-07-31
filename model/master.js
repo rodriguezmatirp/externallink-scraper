@@ -5,7 +5,8 @@ const MasterSchema = new mongoose.Schema({
     link: { type: String, required: true, unique: true },
     algo: { type: String, required: true },
     sitemap_count: { type: Number, default: 0 },
-    website_count: { type: Number, default: 0 }
+    website_count: { type: Number, default: 0 },
+    blocked: { type: Boolean, default: false }
 }, {
     timestamps: true
 });

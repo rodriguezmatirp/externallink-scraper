@@ -68,12 +68,13 @@ module.exports.algo1 = async(req) => {
         // for site map insertion//
         response = await new Promise((resolve, reject) => {
             parser.parseString(html, async function(err, result) {
-                if (result !== undefined && result["sitemapIndex"] !== undefined) {
+                if (result !== undefined && result["sitemapindex"] !== undefined) {
                     var doc = await algo1insertSiteMap(
                         result,
                         url,
                         result["sitemapindex"]["sitemap"].length
                     );
+                    await masterSchema.findOneAndUpdate({ link: url }, { blocked: false })
                     flag = true
                 } else {
                     console.error('Cannot crawl website ' + url)
@@ -367,7 +368,7 @@ const saveUniqueExtLink = async(title, text, sitemap, rel, article_link, lastmod
             } catch (e) {
                 if (e.code === 11000) {
                     await externalLinkSchema.findOneAndUpdate({ externalLink: externalLink_ }, { $inc: { externalLink_count: 1 } })
-                    console.log('Incrementing external link ' + externalLink_)
+                        // console.log('Incrementing external link ' + externalLink_)
                 } else {
                     console.log('Error : website ---' + externalLink_ + e)
                 }

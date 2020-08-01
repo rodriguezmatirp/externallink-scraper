@@ -83,7 +83,7 @@ module.exports.WebsiteInfo = async(limit, skip, sort, type) => {
             else if (type == 'dateWise')
                 sortCondition['updatedAt'] = sort
         }
-        const count = await masterSchema.count()
+        const count = await masterSchema.countDocuments()
         const info = await masterSchema.find()
             .sort(sortCondition)
             .limit(limit)

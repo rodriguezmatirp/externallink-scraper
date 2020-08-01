@@ -43,7 +43,7 @@ module.exports.get = async(start, end, skip, limit, sort, type, showOnly) => {
 
         // Count used for Pagination in Frontend
         var entriesCount = await externalLinkSchema
-            .count(findCondition)
+            .countDocuments(findCondition)
 
         var doc = await externalLinkSchema
             .find(findCondition)

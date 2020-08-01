@@ -41,7 +41,7 @@ db = async() => {
     try {
         const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/scrapper'
         const con = await mongoose.connect(mongoUri, {
-            useFindAndModify: true,
+            useFindAndModify: false,
             useNewUrlParser: true,
             useCreateIndex: true,
             autoReconnect: true,

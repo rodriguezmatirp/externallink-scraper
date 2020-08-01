@@ -15,7 +15,7 @@ module.exports.crawlerLoop = crawler = async() => {
     if (crawlerFlag) {
         setTimeout(crawler, 10000, tasksList)
         crawlerSkipCounter += 1
-        if (crawlerSkipCounter >= 30) {
+        if (crawlerSkipCounter >= 60) {
             crawlerFlag = false
             crawlerSkipCounter = 0
         }

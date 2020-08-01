@@ -68,15 +68,12 @@ module.exports.algo1 = async(req) => {
         // for site map insertion//
         response = await new Promise((resolve, reject) => {
             parser.parseString(html, async function(err, result) {
+                // console.log(result["sitemapindex"])
                 if (result !== undefined && result["sitemapindex"] !== undefined) {
-                    var doc = await algo1insertSiteMap(
-                        result,
-                        url,
-                        result["sitemapindex"]["sitemap"].length
-                    );
+                    var doc = await algo1insertSiteMap(result, url, result["sitemapindex"]["sitemap"].length);
                     await masterSchema.findOneAndUpdate({ link: url }, { blocked: false })
                     flag = true
-                } else if (result === undefined || result["sitemap"] === undefined) {
+                } else if (result === undefined || result["sitemapindex"] === undefined) {
                     console.error('Cannot crawl website ' + url)
                     console.log('Added to Exceptional Websites')
                     await masterSchema.findOneAndUpdate({ link: url }, { blocked: true })
@@ -209,6 +206,9 @@ var checkupdates = async(result, length) => {
         var counter = 0;
         var arr = [];
         for (i = 0; i < length; i++) {
+            if (!result["sitemapindex"]["sitemap"][i].lastmod || !result["sitemapindex"]["sitemap"][i].lastmod[0]) {
+                result["sitemapindex"]["sitemap"][i]["lastmod"] = [Date.now()]
+            }
             var url = result["sitemapindex"]["sitemap"][i].loc[0];
             var lastmod = result["sitemapindex"]["sitemap"][i].lastmod[0];
             // console.log(Date.parse(lastmod));
@@ -307,7 +307,9 @@ const algo1insertArticle = async(result, main_url, url, length, req) => {
                 external.forEach((arr) => {
                     arr.status = false
                 })
-
+                if (!result["sitemapindex"]["sitemap"][i].lastmod || !result["sitemapindex"]["sitemap"][i].lastmod[0]) {
+                    result["sitemapindex"]["sitemap"][i]["lastmod"] = [Date.now()]
+                }
                 const articlemap = new articleSchema({
                     main_link: main_url,
                     parent_link: url,
@@ -391,6 +393,9 @@ const algo1insertSiteMap = async(result, url, length) => {
                 link: result["sitemapindex"]["sitemap"][i].loc[0],
                 page: i + 1,
             });
+            if (!result["sitemapindex"]["sitemap"][i].lastmod || !result["sitemapindex"]["sitemap"][i].lastmod[0]) {
+                result["sitemapindex"]["sitemap"][i]["lastmod"] = [Date.now()]
+            }
             const sitemap = new sitemapSchema({
                 parent_link: url,
                 updated_at: Date.now(),
@@ -406,13 +411,14 @@ const algo1insertSiteMap = async(result, url, length) => {
             } catch (e) {
                 console.log(e)
             }
-            console.log(counter);
+            console.log(counter + ' - For Sitemap ' + url + ' - Link ' + result["sitemapindex"]["sitemap"][i].loc[0]);
             // console.log(doc);
             if (counter == length) {
                 return true;
             }
         }
     } catch (err) {
+        console.log(err)
         return false;
     }
 };
@@ -441,4 +447,3 @@ var TitleSplitter = async(url) => {
 
     return split2[0];
 };
-``

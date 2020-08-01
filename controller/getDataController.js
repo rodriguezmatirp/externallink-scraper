@@ -52,6 +52,9 @@ const filterProcess = async(doc, type) => {
             filtered_all.push(data.restricted_link)
         }
     })
+
+    console.log('Filtering Process')
+
     for (let data of doc) {
         for (let ext_link of data.externalLinks) {
             for (let fil of filtered_all) {
@@ -72,7 +75,7 @@ const filterProcess = async(doc, type) => {
                 for (let fil of filtered_est) {
                     if (ext_link.link) {
                         if (ext_link.link.includes(fil)) {
-                            console.log('Filtering')
+                            // console.log('Filtering')
                             delete ext_link.link
                             delete ext_link.rel
                             delete ext_link.status

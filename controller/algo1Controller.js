@@ -76,7 +76,7 @@ module.exports.algo1 = async(req) => {
                     );
                     await masterSchema.findOneAndUpdate({ link: url }, { blocked: false })
                     flag = true
-                } else {
+                } else if (result === undefined || result["sitemap"] === undefined) {
                     console.error('Cannot crawl website ' + url)
                     console.log('Added to Exceptional Websites')
                     await masterSchema.findOneAndUpdate({ link: url }, { blocked: true })

@@ -307,8 +307,8 @@ const algo1insertArticle = async(result, main_url, url, length, req) => {
                 external.forEach((arr) => {
                     arr.status = false
                 })
-                if (!result["sitemapindex"]["sitemap"][i].lastmod || !result["sitemapindex"]["sitemap"][i].lastmod[0]) {
-                    result["sitemapindex"]["sitemap"][i]["lastmod"] = [Date.now()]
+                if (!result["urlset"]["url"][i].lastmod || !result["urlset"]["url"][i].lastmod[0]) {
+                    result["urlset"]["url"][i]["lastmod"] = [Date.now()]
                 }
                 const articlemap = new articleSchema({
                     main_link: main_url,

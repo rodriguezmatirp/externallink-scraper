@@ -347,7 +347,7 @@ const algo1insertArticle = async(result, main_url, url, length, req) => {
 
 
 const saveUniqueExtLink = async(title, text, sitemap, rel, article_link, lastmod) => {
-    if (title !== null) {
+    if (title !== null || title !== undefined) {
         var externalLink_ = title.match(/(http|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))/)
         if (externalLink_) {
             try {

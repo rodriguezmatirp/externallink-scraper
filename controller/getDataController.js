@@ -1,13 +1,17 @@
 const mongoose = require("mongoose");
 const articleSchema = require("../model/article");
 const sitemapSchema = require("../model/sitemap");
+const linkSchema = require('../model/links')
+const domainSchema = require('../model/domain')
 const restrictedSchema = require('../model/restricted')
 
 module.exports.get = async(link, type, start, end, skip, limit) => {
     try {
         var condition = {}
         if (link) {
-            condition["main_link"] = link
+            const domain = await domainSchema.findOne({ domainSitemap: link })
+            console.log(domain)
+            condition["domainId"] = domain._id
         }
 
         start = new Date(start)
@@ -18,28 +22,45 @@ module.exports.get = async(link, type, start, end, skip, limit) => {
         let end_flag = (end.getTime() === end.getTime())
 
         if (start_flag || end_flag) {
-            condition["lastmod"] = {}
+            condition["lastModified"] = {}
             if (start_flag) {
-                condition["lastmod"]["$gte"] = start
+                condition["lastModified"]["$gte"] = start
             }
             if (end_flag) {
-                condition["lastmod"]["$lte"] = end
+                condition["lastModified"]["$lte"] = end
             }
         }
+
         console.log(condition)
-        var doc = await articleSchema
-            .find(condition)
-            .sort({ lastmod: 'desc' })
-        const result = await filterProcess(doc, type)
+
+        var articles = await articleSchema.aggregate([
+            { $match: condition },
+            {
+                $lookup: {
+                    from: "links",
+                    let: { "i": "$_id" },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ["$articleId", "$$i"] } } },
+                        { $project: { "externalLink": 1, "rel": 1, "status": 1, "anchorText": 1, "_id": 1 } }
+                    ],
+                    as: "externalLinks"
+                }
+            },
+            { $project: { "articleLink": 1, "lastModified": 1, "externalLinks": 1, "_id": 0 } },
+            { $sort: { 'lastModified': -1 } },
+        ])
+
+
+        const result = await filterProcess(articles, type)
 
         return result
-    } catch (e) {
-        console.log(e)
+    } catch (error) {
+        console.error(error)
     }
 }
 
 
-const filterProcess = async(doc, type) => {
+const filterProcess = async(articles, type) => {
     let filtered_all = []
     let filtered_est = []
 
@@ -55,30 +76,31 @@ const filterProcess = async(doc, type) => {
 
     console.log('Filtering Process')
 
-    for (let data of doc) {
-        for (let ext_link of data.externalLinks) {
+    for (let article of articles) {
+        for (let externalLink of article.externalLinks) {
             for (let fil of filtered_all) {
-                if (ext_link.link.includes(fil)) {
-                    console.log('Filtering')
-                    delete ext_link.link
-                    delete ext_link.rel
-                    delete ext_link.status
+                if (externalLink.link.includes(fil)) {
+                    delete externalLink.externalLink
+                    delete externalLink.rel
+                    delete externalLink.status
+                    delete externalLink.anchorText
                     break
                 } else continue
             }
         }
     }
-    for (let data of doc) {
-        if (data.main_link.includes("startuptalky.com/sitemap.xml")) continue
+    for (let article of articles) {
+        if (article.articleLink.includes("startuptalky.com/")) continue
         else {
-            for (let ext_link of data.externalLinks) {
+            for (let externalLink of article.externalLinks) {
                 for (let fil of filtered_est) {
-                    if (ext_link.link) {
-                        if (ext_link.link.includes(fil)) {
+                    if (externalLink.link) {
+                        if (externalLink.link.includes(fil)) {
                             // console.log('Filtering')
-                            delete ext_link.link
-                            delete ext_link.rel
-                            delete ext_link.status
+                            delete externalLink.externalLink
+                            delete externalLink.rel
+                            delete externalLink.status
+                            delete externalLink.anchorText
                             break
                         } else continue
                     }
@@ -87,13 +109,14 @@ const filterProcess = async(doc, type) => {
         }
     }
     //Filtering ends
+    console.log('Filtering Process Done !')
 
-    let unfilteredResult = doc;
+    let unfilteredResult = articles;
 
     for (let i = 0; i < unfilteredResult.length; i++) {
         var filterExt = []
         for (let data of unfilteredResult[i].externalLinks) {
-            if (data.link === undefined) continue
+            if (data.externalLink === undefined) continue
             else {
                 if (type === "dofollow") {
                     if (data.rel === undefined || data.rel === "dofollow") {
@@ -126,4 +149,4 @@ incrementDate = async(dateInput, increment) => {
         dateFormatTotime.getTime() + increment * 86400000
     );
     return increasedDate;
-};
+}

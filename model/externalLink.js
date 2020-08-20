@@ -1,17 +1,17 @@
 const mongoose = require('mongoose')
 
 const externalLinkSchema = new mongoose.Schema({
+    domainId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'domains' },
     externalLink: { type: String, required: true, unique: true },
-    article_link: { type: String, required: true },
-    sitemap_link: { type: String, required: true },
+    externalLinkCount: { type: Number, default: 1 },
+    articleLink: { type: String, required: true },
     rel: { type: String, default: "dofollow" },
-    externalLink_count: { type: Number, default: 1 },
+    anchorText: { type: String },
+    lastModified: { type: Date, required: true },
     status: { type: Boolean, default: false },
-    anchor_text: { type: String },
-    lastmod: { type: Date, required: true },
-    external_url: { type: String, required: true, unique: true }
+    externalUrl: { type: String, required: true, unique: true }
 }, {
     timestamps: true
 })
 
-module.exports = externalLink = mongoose.model("externalLink", externalLinkSchema);
+module.exports = externalLinks = mongoose.model("externalLinks", externalLinkSchema);

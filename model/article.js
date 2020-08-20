@@ -1,14 +1,31 @@
+/*  
+articleSchema:
+    Schema that holds the info of an Article which is scraped from sub-sitemaps
+
+Properties : 
+    sitemapIDs  - array of ObjectIds of records in sitemapSchema 
+                  [Multiple sitemaps can have links to same article]
+    disabled -  this is for websites which cannot be crawled or is not a valid website
+    articleUrl  - the links present in subsitemaps
+    lastChecked - when the page was last checked for new external links
+    externalLinks  -  Array of objectIds for records in linksSchema
+*/
+
 const mongoose = require("mongoose");
 
-const ArticleSchema = new mongoose.Schema({
-    main_link: { type: String, required: true },
-    parent_link: { type: String, required: true },
-    articlelink: { type: String, required: true, unique: true },
-    lastmod: { type: Date, required: true },
-    page: { type: Number, required: true },
-    externalLinks: { type: Array, required: true },
-    created_at: { type: Date, required: false, default: Date.now() },
-    updated_at: { type: Date, required: false }
+const articleSchema = new mongoose.Schema({
+    domainId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'domains' },
+    sitemapId: { type: mongoose.Schema.Types.ObjectId, required: true },
+    disabled: { type: Boolean, default: false },
+    articleLink: { type: String, required: true, unique: true },
+    //externalLinkIds: [{
+    //    $id: { type: mongoose.Schema.Types.ObjectId, required: true, unique: true },
+    //    $ref: { type: String, required: true }
+    //}],
+    lastChecked: { type: Date, required: true, default: Date.now() },
+    lastModified: { type: Date, required: true }
+}, {
+    timestamps: true
 });
 
-module.exports = Articles = mongoose.model("articles", ArticleSchema);
+module.exports = articles = mongoose.model("articles", articleSchema);

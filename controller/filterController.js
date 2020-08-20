@@ -2,7 +2,7 @@ const mondoose = require('mongoose')
 const restrictedSchema = require('../model/restricted')
 const axios = require('axios')
 const articleSchema = require('../model/article')
-const masterSchema = require('../model/master')
+const domianSchema = require('../model/domain')
 const sitemapSchema = require('../model/sitemap')
 
 module.exports.add_ = async(url, type) => {

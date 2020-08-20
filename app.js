@@ -39,21 +39,22 @@ const tunnel = require('tunnel-ssh')
 var app = express();
 db = async() => {
     try {
-        const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/scrapper'
+        const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/test'
         const con = await mongoose.connect(mongoUri, {
             useFindAndModify: false,
             useNewUrlParser: true,
             useCreateIndex: true,
-            autoReconnect: true,
-            reconnectTries: Number.MAX_VALUE,
-            reconnectInterval: 1000,
+            useUnifiedTopology: true,
+            //autoReconnect: true,
+            //reconnectTries: Number.MAX_VALUE,
+            //reconnectInterval: 1000,
             poolSize: 10
         });
         if (con) {
-            console.log("Connected Successfull !");
+            console.log("App : Connected Successfull to the Database !");
         }
     } catch (err) {
-        console.log("Not Connected Err:-" + err);
+        console.log("App : Not Connected Err: " + err);
     }
 };
 db();
@@ -75,11 +76,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 //load Schema
 require("./model/user");
 
-// Automated crawling of sitemaps
-const Scheduler = require('./scheduler/schedule')
-setTimeout(Scheduler.crawlerLoop, 20000)
-setTimeout(Scheduler.schedulerLoop, 10000)
 
+// const func = require('./controller/scrapper')
 //Routes
 app.use("/", indexRouter);
 app.use("/users", userController);

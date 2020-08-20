@@ -1,5 +1,5 @@
 const mongoose = require('mongoose')
-const master = require('../model/master')
+const domain = require('../model/domain')
 
 const algo1 = require('../controller/algo1Controller')
 

@@ -29,6 +29,21 @@ const cheerio = require('cheerio');
 // })();
 
 
+const blockedSocialMediaLinks = [
+    "facebook.com",
+    "twitter.com",
+    "linkedin.com",
+    "youtube.com",
+    "telegram.org",
+    "t.me",
+    "instagram.com",
+    "amazon.com",
+    "amazon.in",
+    "flipkart.com"
+]
+
+
+
 module.exports.scrapeSitemap = scrapeSitemap = async(sitemapUrl, domainId, parentSitemapId = undefined, lastModified = Date.now()) => {
     console.log("Sitemap URL: ", sitemapUrl)
     console.log("DOmainID URL: ", domainId)
@@ -151,23 +166,25 @@ const cheerioSitemapParser = function(pageContent) {
 
 
 const validateUrl = (pageDomain, hyperLinkUrl) => {
-    const socialmediaLinks = ["facebook.com", "twitter.com", "linkedin.com", "youtube.com", "telegram.org", "t.me/", "instagram.com"]
-    if (/^#.*/.test(hyperLinkUrl) ||
-        hyperLinkUrl === '' ||
-        hyperLinkUrl.includes(pageDomain) || // Filter links to same domain
-        hyperLinkUrl.charAt(0) === "/" || // Filter links to same page relatively
-        hyperLinkUrl.indexOf('mailto') === 0 || // Filter email links
-        hyperLinkUrl.includes("javascript:void") || // Legacy code - needs checking
+
+
+    if (hyperLinkUrl.includes(pageDomain) || // Filter links to same domain
+        // Legacy code - needs checking
+        // /^#.*/.test(hyperLinkUrl) ||
+        // hyperLinkUrl === '' ||
+        // hyperLinkUrl.charAt(0) === "/" || 
+        // hyperLinkUrl.indexOf('mailto') === 0 || 
+        // hyperLinkUrl.includes("javascript:void") || 
         hyperLinkUrl.includes("share.hsforms.com") ||
-        socialmediaLinks.some(function(string) { return hyperLinkUrl.includes(string) })
+        blockedSocialMediaLinks.some(function(string) { return hyperLinkUrl.includes(string) })
     )
         return false
     return true
 }
 
 const cheerioArticleParser = function(pageUrl, pageContent) {
-    const parsedUrl = pageUrl.match(/(?:[\w-]+\.)+[\w-]+/)
-    const pageDomain = parsedUrl[0].toLowerCase() // Lower to filter domains with capital letters
+    const pageDomainRegex = pageUrl.match(/(?!:\/\/)([a-zA-Z0-9-_]+\.)*[a-zA-Z0-9][a-zA-Z0-9-_]+\.[a-zA-Z]{2,11}/)
+    const pageDomain = pageDomainRegex[0].toLowerCase() // Lower to filter domains with capital letters
     const $ = cheerio.load(pageContent)
 
     const hyperLinks = $('a').filter(function(index, e) {
@@ -178,26 +195,23 @@ const cheerioArticleParser = function(pageUrl, pageContent) {
     const parsedHyperLinks = []
 
     hyperLinks.each(function(index, e) {
-        var unparsedLink = $(this).attr('href')
-        unparsedLink = unparsedLink.slice(unparsedLink.search(/(http|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))/))
+        var unparsedLink = $(this).attr('href') ? $(this).attr('href') : ''
+        var parsedLinkRegex = unparsedLink.match(/^(https?:\/\/){0,1}(www\.)?[-a-zA-Z0-9:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(\/[-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)/)
+        if (parsedLinkRegex) {
 
-        if (unparsedLink.includes('?'))
-            unparsedLink = unparsedLink.slice(0, unparsedLink.indexOf('?'))
-        if (unparsedLink.endsWith('/'))
-            unparsedLink = unparsedLink.slice(0, -1)
-            // more work to optimize url fetch using regex
-        var parsedLink = unparsedLink
+            var parsedLink = parsedLinkRegex[0]
 
-        if (parsedLink) {
+            if (parsedLink.endsWith('/'))
+                parsedLink = parsedLink.slice(0, -1)
+
             var rel = 'dofollow'
-                // console.log(`Rel for ${parsedLink} is `, $(this).attr('rel'))
             if ($(this).attr('rel') !== undefined && $(this).attr('rel').includes("nofollow"))
                 rel = 'nofollow'
 
             var anchorText = $(this).text()
+
             while (/<img.*>/.test(anchorText) === true) {
                 var altText = /<img.*?[alt="(.*?)" | alt='(.*?)'].*>/g.exec(anchorText)[1]
-
                 anchorText = anchorText.replace(/<img.*?[alt="(.*?)" | alt='(.*?)'].*>/, ` ${altText} `)
             }
             anchorText = anchorText.trim()
@@ -219,8 +233,7 @@ const scrapeArticle = async(articleUrl, domainId, parentSitemapId, lastModified 
         response = await getpageContent(articleUrl)
             //console.log(`Parsing Article: ${articleUrl} from sitemapId : ${parentSitemapId}`)
         var parsedHyperlinks = cheerioArticleParser(articleUrl, response)
-
-        // console.log(`Parsed ${parsedHyperlinks.length} links from ${articleUrl}`)
+            // console.log(`Parsed ${parsedHyperlinks.length} links from ${articleUrl}`)
     } catch (err) {
         throw Error(`Stopped Scrapping Article ${articleUrl} from sitemapId - ${parentSitemapId} due to :\n${err}`)
     }
@@ -239,7 +252,6 @@ const scrapeArticle = async(articleUrl, domainId, parentSitemapId, lastModified 
         })
         articleDBData = await articleDBData.save()
         await domainSchema.findOneAndUpdate({ _id: domainId }, { $inc: { websiteCount: 1 } })
-
     }
 
     if (parsedHyperlinks.length != 0) {
@@ -255,7 +267,7 @@ const scrapeArticle = async(articleUrl, domainId, parentSitemapId, lastModified 
             }
 
             if (shouldAdd) {
-                console.log(`Found new external Link - ${parsedLink} from Article - ${articleUrl}`)
+                console.log(`Found new External Link - "${parsedLink}" from Article - ${articleUrl}`)
 
                 externalLinkData = new linksSchema({
                     domainId: domainId,
@@ -264,11 +276,14 @@ const scrapeArticle = async(articleUrl, domainId, parentSitemapId, lastModified 
                     rel: rel,
                     anchorText: anchorText,
                 })
-                externalLinkData = await externalLinkData.save()
+                try {
+                    externalLinkData = await externalLinkData.save()
+                } catch (e) {
+                    console.log('Error saving externalLinks to db ' - parsedLink)
+                }
                 await saveUniqueExtLink(parsedLink, anchorText, rel, articleUrl, lastModified, domainId)
             }
         }
-
     }
 
     return parsedHyperlinks
@@ -311,20 +326,26 @@ const getpageContent = async(url, noOfTries) => {
     if (isNaN(noOfTries) || noOfTries < 1)
         noOfTries = 5
 
+
+    var error = null
     for (let i = 0; i < noOfTries; i++) {
         try {
             const result = await axios.get(url);
             // console.log('Page Loading Success ! - ' + url)
             return result.data;
         } catch (err) {
-            if (i === noOfTries - 1) {
-                throw err;
-            }
+            error = err
             console.log(`Request Retry Attempt Number: ${i + 1} ====> URL: ${url}`);
         }
     }
+    try {
+        await domainSchema.findOneAndUpdate({ domainSitemap: url }, { blocked: true })
+        console.error(`Scraper Error : Blocked URL ${url} in Database`)
+    } catch (e) {
+        console.log(e)
+    }
+    throw error;
 }
 
 
-
-// scrapeSitemap('https://inc42.com/sitemap.xml', '5f3e94336dfcc22efc85cdfa')
+// scrapeSitemap('https://renovate.home.blog/sitemap.xml', '5f3ea8fd0be8d22e8c0d0345')

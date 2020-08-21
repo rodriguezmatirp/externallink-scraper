@@ -29,7 +29,7 @@ const snooze = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 class backgroundProcessController {
 
-    constructor(workerCount = 3) {
+    constructor(workerCount = 5) {
         this.autoCrawlTasks = []
         this.crawlWorkers = {}
         this.currentlyCrawling = []
@@ -62,7 +62,7 @@ class backgroundProcessController {
                     if (this.crawlWorkers[pid][2].length <= this.crawlWorkers[lowTaskedPid][2])
                         lowTaskedPid = pid
                 }
-                if (this.crawlWorkers[lowTaskedPid][2].length < 3) { break }
+                if (this.crawlWorkers[lowTaskedPid][2].length < 5) { break }
                 console.log(`backgroundProcess - enqueueCrawlTask - all workers are busy, sleeping for 15 seconds`)
                 await snooze(15000)
             }

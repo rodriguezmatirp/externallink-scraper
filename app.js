@@ -44,10 +44,9 @@ db = async() => {
             useFindAndModify: false,
             useNewUrlParser: true,
             useCreateIndex: true,
-            useUnifiedTopology: true,
-            //autoReconnect: true,
-            //reconnectTries: Number.MAX_VALUE,
-            //reconnectInterval: 1000,
+            autoReconnect: true,
+            reconnectTries: Number.MAX_VALUE,
+            reconnectInterval: 1000,
             poolSize: 10
         });
         if (con) {

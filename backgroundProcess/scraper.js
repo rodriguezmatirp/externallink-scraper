@@ -11,7 +11,9 @@ const snooze = ms => new Promise(resolve => setTimeout(resolve, ms));
             useFindAndModify: false,
             useNewUrlParser: true,
             useCreateIndex: true,
-            useUnifiedTopology: true,
+            autoReconnect: true,
+            reconnectTries: Number.MAX_VALUE,
+            reconnectInterval: 1000,
             poolSize: 2
         });
         if (con) {
@@ -41,19 +43,19 @@ class scrapeWorkerController {
     }
 
     async scrape([domainId, domainSitemap]) {
-        if (this.domainIdsBeingScraped.includes(domainId))
-            return
-        this.domainIdsBeingScraped.push(domainId)
-        await Promise.race([scrapeModule.scrapeSitemap(domainSitemap, domainId),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3600000))
-        ]).catch(function(err) {
-            console.error(`crawlWorker[${process.pid}]: Scrapping ${ domainSitemap } failed due to: ${ err }`)
-        })
+        if (!this.domainIdsBeingScraped.includes(domainId) && this.domainIdsBeingScraped.length >= this.maxPromisesCount) {
+            this.domainIdsBeingScraped.push(domainId)
+            await Promise.race([scrapeModule.scrapeSitemap(domainSitemap, domainId),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3600000))
+            ]).catch(function(err) {
+                console.error(`crawlWorker[${process.pid}]: Scrapping ${ domainSitemap } failed due to: ${ err }`)
+            })
 
-        var index = this.domainIdsBeingScraped.indexOf(domainId)
-        if (index != -1) {
-            console.log(`crawlWorker[${process.pid}]: Removing ${domainId} from scrapelist: ${this.domainIdsBeingScraped}`)
-            this.domainIdsBeingScraped = this.domainIdsBeingScraped.splice(index, 1)
+            var index = this.domainIdsBeingScraped.indexOf(domainId)
+            if (index != -1) {
+                console.log(`crawlWorker[${process.pid}]: Removing ${domainId} from scrapelist: ${this.domainIdsBeingScraped}`)
+                this.domainIdsBeingScraped = this.domainIdsBeingScraped.splice(index, 1)
+            }
         }
         process.send([process.pid, 1, domainId])
     }

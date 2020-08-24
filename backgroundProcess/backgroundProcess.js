@@ -14,7 +14,9 @@ const snooze = ms => new Promise(resolve => setTimeout(resolve, ms));
             useFindAndModify: false,
             useNewUrlParser: true,
             useCreateIndex: true,
-            useUnifiedTopology: true,
+            autoReconnect: true,
+            reconnectTries: Number.MAX_VALUE,
+            reconnectInterval: 1000,
             poolSize: 5
         });
         if (con) {
@@ -29,7 +31,7 @@ const snooze = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 class backgroundProcessController {
 
-    constructor(workerCount = 5) {
+    constructor(workerCount = 4) {
         this.autoCrawlTasks = []
         this.crawlWorkers = {}
         this.currentlyCrawling = []
@@ -62,7 +64,7 @@ class backgroundProcessController {
                     if (this.crawlWorkers[pid][2].length <= this.crawlWorkers[lowTaskedPid][2])
                         lowTaskedPid = pid
                 }
-                if (this.crawlWorkers[lowTaskedPid][2].length < 5) { break }
+                if (this.crawlWorkers[lowTaskedPid][2].length < 4) { break }
                 console.log(`backgroundProcess - enqueueCrawlTask - all workers are busy, sleeping for 15 seconds`)
                 await snooze(15000)
             }
@@ -95,7 +97,7 @@ class backgroundProcessController {
                         delete this.crawlWorkers[pid]
                     }
                 }
-                await snooze(5000)
+                await snooze(1000)
             } catch (err) {
                 console.error(`backgroundProcess - workerStatusMaintianer err: ${err}`)
                 await snooze(1000)

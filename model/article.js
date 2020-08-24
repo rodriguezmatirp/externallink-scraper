@@ -16,7 +16,7 @@ const mongoose = require("mongoose");
 const articleSchema = new mongoose.Schema({
     domainId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'domains' },
     sitemapId: { type: mongoose.Schema.Types.ObjectId, required: true },
-    disabled: { type: Boolean, default: false },
+    blocked: { type: Boolean, default: false },
     articleLink: { type: String, required: true, unique: true },
     //externalLinkIds: [{
     //    $id: { type: mongoose.Schema.Types.ObjectId, required: true, unique: true },

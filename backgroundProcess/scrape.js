@@ -63,29 +63,40 @@ module.exports.scrapeSitemap = scrapeSitemap = async(sitemapUrl, domainId, paren
 
         console.log(`${sitemapUrl} has ${parsedSitemapLinks.length} sitemaps and  ${parsedArticleLinks.length} articles`)
     } catch (err) {
-        throw Error(`Stopped Scrapping ${sitemapUrl} due to : ${err}`)
+        console.error(`ScrapeSitemap Error: Stopped Scrapping ${sitemapUrl} due to : ${err}`)
+        if (parentSitemapId == undefined) {
+            try {
+                await domainSchema.findOneAndUpdate({ domainSitemap: sitemapUrl }, { blocked: true })
+                throw new Error(`ScrapeSitemap: Blocked domainSitemap - ${sitemapUrl}`)
+            } catch (e) {
+                throw new Error(`ScrapeSitemap: Can't find domainSitemap - ${sitemapUrl} to block in domainSchema`)
+            }
+        }
     }
 
     let sitemapDataFromDB = await sitemapSchema.find({ sitemapLink: sitemapUrl })
     if (sitemapDataFromDB.length != 0) {
         sitemapDBData = sitemapDataFromDB[0]
     } else {
-        sitemapDBData = new sitemapSchema({
-            domainId: domainId,
-            parentSitemapId: parentSitemapId,
-            sitemapLink: sitemapUrl,
-            disabled: false,
-            lastModified: new Date(0)
-        })
-        sitemapDBData = await sitemapDBData.save()
-
-        await domainSchema.findOneAndUpdate({ _id: domainId }, { $inc: { subSitemapCount: 1 } })
+        try {
+            sitemapDBData = new sitemapSchema({
+                domainId: domainId,
+                parentSitemapId: parentSitemapId,
+                sitemapLink: sitemapUrl,
+                disabled: false,
+                lastModified: new Date(0)
+            })
+            sitemapDBData = await sitemapDBData.save()
+            await domainSchema.findOneAndUpdate({ _id: domainId }, { $inc: { subSitemapCount: 1 } })
+        } catch (e) {
+            console.log(`ScrapeSitemap MongoDB error while saving ${sitemapUrl} under sitemapID: ${parentSitemapId} : ${e}`)
+        }
     }
 
     var scrapeTasks = []
 
     if (parsedSitemapLinks.length != 0) {
-        subSitemapsDBData = await sitemapSchema.find({ parentSitemapId: sitemapDBData._id })
+        subSitemapsDBData = await sitemapSchema.find({ parentSitemapId: sitemapDBData._id }, { blocked: false })
         for (let sitemapObj of parsedSitemapLinks) {
             var shouldScrape = true;
             for (let subSitemapDbData of subSitemapsDBData) {
@@ -95,13 +106,19 @@ module.exports.scrapeSitemap = scrapeSitemap = async(sitemapUrl, domainId, paren
                 }
             }
 
-            if (shouldScrape)
-                await scrapeSitemap(sitemapObj[0], domainId, sitemapDBData._id, sitemapObj[1])
+            if (shouldScrape) {
+                try {
+                    await scrapeSitemap(sitemapObj[0], domainId, sitemapDBData._id, sitemapObj[1])
+                } catch (err) {
+                    console.error(`ScrapeSitemap Error: Blocking ${articleObj[0]} from sitemapID: ${sitemapDBData._id} : ${err}`)
+                    await sitemapSchema.findOneAndUpdate({ sitemapLink: sitemapObj[0] }, { blocked: true })
+                }
+            }
         }
     }
 
     if (parsedArticleLinks.length != 0) {
-        articleLinksData = await articleSchema.find({ sitemapIds: sitemapDBData._id })
+        articleLinksData = await articleSchema.find({ sitemapId: sitemapDBData._id }, { blocked: false })
         for (let articleObj of parsedArticleLinks) {
             var shouldScrape = true;
             for (let articleDbData of articleLinksData) {
@@ -111,8 +128,14 @@ module.exports.scrapeSitemap = scrapeSitemap = async(sitemapUrl, domainId, paren
                 }
             }
 
-            if (shouldScrape)
-                await scrapeArticle(articleObj[0], domainId, sitemapDBData._id, articleObj[1])
+            if (shouldScrape) {
+                try {
+                    await scrapeArticle(articleObj[0], domainId, sitemapDBData._id, articleObj[1])
+                } catch (err) {
+                    console.error(`ScrapeArticle Error: Blocking ${articleObj[0]} from sitemapID: ${sitemapDBData._id} : ${err}`)
+                    await articleSchema.findOneAndUpdate({ articleLink: articleObj[0] }, { blocked: true })
+                }
+            }
         }
 
     }
@@ -242,16 +265,20 @@ const scrapeArticle = async(articleUrl, domainId, parentSitemapId, lastModified 
     if (articleDataFromDB.length != 0) {
         articleDBData = articleDataFromDB[0]
     } else {
-        articleDBData = new articleSchema({
-            domainId: domainId,
-            sitemapId: parentSitemapId,
-            articleLink: articleUrl,
-            disabled: false,
-            lastModified: lastModified,
-            domainId: domainId
-        })
-        articleDBData = await articleDBData.save()
-        await domainSchema.findOneAndUpdate({ _id: domainId }, { $inc: { websiteCount: 1 } })
+        try {
+            articleDBData = new articleSchema({
+                domainId: domainId,
+                sitemapId: parentSitemapId,
+                articleLink: articleUrl,
+                disabled: false,
+                lastModified: lastModified,
+                domainId: domainId
+            })
+            articleDBData = await articleDBData.save()
+            await domainSchema.findOneAndUpdate({ _id: domainId }, { $inc: { websiteCount: 1 } })
+        } catch (e) {
+            console.log(`ScrapeArticle MongoDB error while saving ${articleUrl} under sitemapID: ${parentSitemapId} : ${e}`)
+        }
     }
 
     if (parsedHyperlinks.length != 0) {
@@ -337,12 +364,6 @@ const getpageContent = async(url, noOfTries) => {
             error = err
             console.log(`Request Retry Attempt Number: ${i + 1} ====> URL: ${url}`);
         }
-    }
-    try {
-        await domainSchema.findOneAndUpdate({ domainSitemap: url }, { blocked: true })
-        console.error(`Scraper Error : Blocked URL ${url} in Database`)
-    } catch (e) {
-        console.log(e)
     }
     throw error;
 }

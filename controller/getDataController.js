@@ -1,147 +1,105 @@
 const mongoose = require("mongoose");
 const articleSchema = require("../model/article");
 const sitemapSchema = require("../model/sitemap");
-const linkSchema = require('../model/links')
+const linksSchema = require('../model/links')
 const domainSchema = require('../model/domain')
 const restrictedSchema = require('../model/restricted')
 
 module.exports.get = async(link, type, start, end, skip, limit) => {
     try {
-        var condition = {}
-        if (link) {
-            const domain = await domainSchema.findOne({ domainSitemap: link })
-            console.log(domain)
-            condition["domainId"] = domain._id
-        }
+        const articleCondition = {}
+        const linksCondition = { 'articleId': [] }
 
+        skip = Number(skip) ? Number(skip) : 0
+        limit = Number(limit) ? Number(limit) : 20
         start = new Date(start)
         end = new Date(end)
         end = await incrementDate(end, 1)
+
+        if (link) {
+            const domain = await domainSchema.findOne({ domainSitemap: link })
+            articleCondition["domainId"] = domain._id
+        }
 
         let start_flag = (start.getTime() === start.getTime())
         let end_flag = (end.getTime() === end.getTime())
 
         if (start_flag || end_flag) {
-            condition["lastModified"] = {}
+            articleCondition["lastModified"] = {}
             if (start_flag) {
-                condition["lastModified"]["$gte"] = start
+                articleCondition["lastModified"]["$gte"] = start
             }
             if (end_flag) {
-                condition["lastModified"]["$lte"] = end
+                articleCondition["lastModified"]["$lte"] = end
             }
         }
 
-        console.log(condition)
+        if (type == 'dofollow' || type == 'nofollow')
+            linksCondition['rel'] = type
 
-        var articles = await articleSchema.aggregate([
-            { $match: condition },
-            {
-                $lookup: {
-                    from: "links",
-                    let: { "i": "$_id" },
-                    pipeline: [
-                        { $match: { $expr: { $eq: ["$articleId", "$$i"] } } },
-                        { $project: { "externalLink": 1, "rel": 1, "status": 1, "anchorText": 1, "_id": 1 } }
-                    ],
-                    as: "externalLinks"
-                }
-            },
-            { $project: { "articleLink": 1, "lastModified": 1, "externalLinks": 1, "_id": 0 } },
-            { $sort: { 'lastModified': -1 } },
-        ])
+        var articles = await articleSchema.find(articleCondition)
+
+        const articleObjs = {}
+
+        articles.forEach((articleObj) => {
+            linksCondition.articleId.push(articleObj._id)
+            articleObjs[articleObj._id] = [articleObj.articleLink, articleObj.lastModified]
+        })
 
 
-        const result = await filterProcess(articles, type)
+        const externalLinkObjs = await linksSchema.find(linksCondition)
 
-        return result
+        var filteredExternalLinks = []
+
+        // Filter process
+        const filterForAll = [],
+            filterExceptStalky = []
+
+        var restrict = await restrictedSchema.find()
+
+        restrict.forEach((data) => {
+            if (data.restricted_type === "EST") {
+                filterExceptStalky.push(data.restricted_link)
+            } else {
+                filterForAll.push(data.restricted_link)
+            }
+        })
+
+        for (let externalLinkObj of externalLinkObjs) {
+
+            const [articleLink, lastModified] = articleObjs[externalLinkObj['articleId']]
+
+            var shouldInclude = !filterForAll.some(restricted => externalLinkObj['externalLink'].includes(restricted))
+
+            if (shouldInclude && !articleLink.includes("startuptalky.com/"))
+                shouldInclude = !filterExceptStalky.some(restricted => externalLinkObj['externalLink'].includes(restricted))
+
+            if (shouldInclude)
+                filteredExternalLinks.push({
+                    '_id': externalLinkObj['_id'],
+                    'articleLink': articleLink,
+                    'lastModified': lastModified,
+                    'externalLink': externalLinkObj['externalLink'],
+                    'anchorText': externalLinkObj['anchorText'],
+                    'status': externalLinkObj['status'],
+                    'rel': externalLinkObj['rel']
+                })
+        }
+
+        const totalArticleLength = filteredExternalLinks.length
+
+        filteredExternalLinks.sort((objA, objB) => (objA.lastModified < objB.lastModified) ? 1 : -1)
+
+        // 
+        // filteredExternalLinks = filteredExternalLinks.slice(skip)
+        // filteredExternalLinks = filteredExternalLinks.slice(0, limit)
+
+        return { externalLinks: filteredExternalLinks, totalCount: totalArticleLength }
     } catch (error) {
         console.error(error)
     }
 }
 
-
-const filterProcess = async(articles, type) => {
-    let filtered_all = []
-    let filtered_est = []
-
-    var restrict = await restrictedSchema.find()
-
-    restrict.forEach((data) => {
-        if (data.restricted_type === "EST") {
-            filtered_est.push(data.restricted_link)
-        } else {
-            filtered_all.push(data.restricted_link)
-        }
-    })
-
-    console.log('Filtering Process')
-
-    for (let article of articles) {
-        for (let externalLink of article.externalLinks) {
-            for (let fil of filtered_all) {
-                if (externalLink.link.includes(fil)) {
-                    delete externalLink.externalLink
-                    delete externalLink.rel
-                    delete externalLink.status
-                    delete externalLink.anchorText
-                    break
-                } else continue
-            }
-        }
-    }
-    for (let article of articles) {
-        if (article.articleLink.includes("startuptalky.com/")) continue
-        else {
-            for (let externalLink of article.externalLinks) {
-                for (let fil of filtered_est) {
-                    if (externalLink.link) {
-                        if (externalLink.link.includes(fil)) {
-                            // console.log('Filtering')
-                            delete externalLink.externalLink
-                            delete externalLink.rel
-                            delete externalLink.status
-                            delete externalLink.anchorText
-                            break
-                        } else continue
-                    }
-                }
-            }
-        }
-    }
-    //Filtering ends
-    console.log('Filtering Process Done !')
-
-    let unfilteredResult = articles;
-
-    for (let i = 0; i < unfilteredResult.length; i++) {
-        var filterExt = []
-        for (let data of unfilteredResult[i].externalLinks) {
-            if (data.externalLink === undefined) continue
-            else {
-                if (type === "dofollow") {
-                    if (data.rel === undefined || data.rel === "dofollow") {
-                        filterExt.push(data)
-                    }
-                } else if (type === "nofollow") {
-                    if (data.rel !== undefined && data.rel !== "dofollow") {
-                        filterExt.push(data)
-                    }
-                } else {
-                    filterExt.push(data)
-                }
-            }
-        }
-        unfilteredResult[i].externalLinks = filterExt
-    }
-    let filtered = []
-
-    for (let i = 0; i < unfilteredResult.length; i++) {
-        if (unfilteredResult[i].externalLinks.length == 0) continue;
-        else filtered.push(unfilteredResult[i]);
-    }
-
-    return filtered
-}
 
 incrementDate = async(dateInput, increment) => {
     var dateFormatTotime = new Date(dateInput);

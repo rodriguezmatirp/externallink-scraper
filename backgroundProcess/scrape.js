@@ -339,7 +339,7 @@ const saveUniqueExtLink = async(title, text, rel, article_link, lastmod, domainI
                 console.log('Adding external link ' + externalLink_[0])
             } catch (e) {
                 if (e.code === 11000) {
-                    await externalLinkSchema.findOneAndUpdate({ externalLink: externalLink_ }, { $inc: { externalLink_count: 1 } })
+                    await externalLinkSchema.findOneAndUpdate({ externalLink: externalLink_ }, { $inc: { externalLinkCount: 1 } })
                 } else {
                     console.log('Error : website ---' + externalLink_[0] + e)
                 }

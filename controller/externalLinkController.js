@@ -97,7 +97,7 @@ module.exports.getAsFile = async(start, end, skip, limit, sort, type, showOnly) 
         tempFilename = dirPath + '\\tmp\\' + tempFilename + '.csv'
 
         // generate file
-        const csvHeader = ["Article-Link", "External-Link", "Rel", "Anchor Text", "Date of Post", "Count", "Status"];
+        const csvHeader = ["Article-Link", "External-Link", "Rel", "Anchor Text", "Date of Post", "Last Modified", "Count", "Status"];
         let result = []
         result.push(csvHeader)
         for (let extLink of extLinks) {
@@ -107,6 +107,7 @@ module.exports.getAsFile = async(start, end, skip, limit, sort, type, showOnly) 
             temp.push(extLink.rel)
             temp.push(extLink.anchorText)
             temp.push(getFormattedDate(extLink.createdAt))
+            temp.push(getFormattedDate(extLink.lastModified))
             temp.push(extLink.externalLinkCount)
             temp.push(extLink.showOnly ? "Verified" : "Not yet verified")
             result.push(temp)

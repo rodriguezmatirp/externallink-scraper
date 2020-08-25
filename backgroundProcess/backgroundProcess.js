@@ -17,7 +17,7 @@ const snooze = ms => new Promise(resolve => setTimeout(resolve, ms));
             autoReconnect: true,
             reconnectTries: Number.MAX_VALUE,
             reconnectInterval: 1000,
-            poolSize: 5
+            poolSize: 3
         });
         if (con) {
             console.log("backgroundProcess: Connected Successful to the Database!");
@@ -31,7 +31,7 @@ const snooze = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 class backgroundProcessController {
 
-    constructor(workerCount = 4) {
+    constructor(workerCount = 3) {
         this.autoCrawlTasks = []
         this.crawlWorkers = {}
         this.currentlyCrawling = []

@@ -47,7 +47,7 @@ db = async() => {
             autoReconnect: true,
             reconnectTries: Number.MAX_VALUE,
             reconnectInterval: 1000,
-            poolSize: 10
+            poolSize: 8
         });
         if (con) {
             console.log("App : Connected Successfull to the Database !");

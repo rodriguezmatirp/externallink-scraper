@@ -14,7 +14,7 @@ const snooze = ms => new Promise(resolve => setTimeout(resolve, ms));
             autoReconnect: true,
             reconnectTries: Number.MAX_VALUE,
             reconnectInterval: 1000,
-            poolSize: 2
+            poolSize: 3
         });
         if (con) {
             console.log(`crawlWorker[${process.pid}]: Connected Successful to the Database!`);
@@ -26,7 +26,7 @@ const snooze = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 
 class scrapeWorkerController {
-    constructor(maxPromisesCount = 3) {
+    constructor(maxPromisesCount = 4) {
         this.maxPromisesCount = maxPromisesCount
         this.domainIdsBeingScraped = []
     }
@@ -43,8 +43,11 @@ class scrapeWorkerController {
     }
 
     async scrape([domainId, domainSitemap]) {
-        if (!this.domainIdsBeingScraped.includes(domainId) && this.domainIdsBeingScraped.length >= this.maxPromisesCount) {
+        if (!this.domainIdsBeingScraped.includes(domainId)
+            //  && this.domainIdsBeingScraped.length >= this.maxPromisesCount
+        ) {
             this.domainIdsBeingScraped.push(domainId)
+            console.log('here')
             await Promise.race([scrapeModule.scrapeSitemap(domainSitemap, domainId),
                 new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3600000))
             ]).catch(function(err) {

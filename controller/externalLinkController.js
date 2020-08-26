@@ -30,7 +30,7 @@ const queryArgsParser = function(start, end, skip, limit, sort, type, showOnly) 
 
     if (type) {
         if (type == 'websiteCount')
-            sortCondition['externalLink_count'] = sort
+            sortCondition['externalLinkCount'] = sort
         else if (type == 'dateWise')
             sortCondition['createdAt'] = sort
     }

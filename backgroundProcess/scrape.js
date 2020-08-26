@@ -5,29 +5,8 @@ const domainSchema = require('../model/domain')
 const articleSchema = require('../model/article')
 const externalLinkSchema = require('../model/externalLink')
 
-const util = require('util')
 const axios = require('axios')
 const cheerio = require('cheerio');
-
-
-// (async() => {
-//     try {
-//         const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/test'
-//         const con = await mongoose.connect(mongoUri, {
-//             useFindAndModify: false,
-//             useNewUrlParser: true,
-//             useCreateIndex: true,
-//             useUnifiedTopology: true,
-//             poolSize: 2
-//         });
-//         if (con) {
-//             console.log(`crawlWorker[${process.pid}]: Connected Successful to the Database!`);
-//         }
-//     } catch (err) {
-//         console.log(`crawlWorker[${process.pid}]: Not Connected to Database due to Error : ${err}`);
-//     }
-// })();
-
 
 const blockedSocialMediaLinks = [
     "facebook.com",
@@ -92,8 +71,6 @@ module.exports.scrapeSitemap = scrapeSitemap = async(sitemapUrl, domainId, paren
             console.log(`ScrapeSitemap MongoDB error while saving ${sitemapUrl} under sitemapID: ${parentSitemapId} : ${e}`)
         }
     }
-
-    var scrapeTasks = []
 
     if (parsedSitemapLinks.length != 0) {
         subSitemapsDBData = await sitemapSchema.find({ parentSitemapId: sitemapDBData._id }, { blocked: false })
@@ -177,10 +154,11 @@ const cheerioSitemapParser = function(pageContent) {
         if (isNaN(lastModified.getTime()))
             lastModified = Date.now()
 
-        linkData = [location, lastModified]
-        parsedArticleLinks.push(linkData)
+        if (!location.includes('/tag/')) {
+            linkData = [location, lastModified]
+            parsedArticleLinks.push(linkData)
+        }
     })
-
     console.log('Article-cheerio length : ', articleLinks.length)
 
     return [parsedSitemapLinks, parsedArticleLinks]
@@ -192,12 +170,6 @@ const validateUrl = (pageDomain, hyperLinkUrl) => {
 
 
     if (hyperLinkUrl.includes(pageDomain) || // Filter links to same domain
-        // Legacy code - needs checking
-        // /^#.*/.test(hyperLinkUrl) ||
-        // hyperLinkUrl === '' ||
-        // hyperLinkUrl.charAt(0) === "/" || 
-        // hyperLinkUrl.indexOf('mailto') === 0 || 
-        // hyperLinkUrl.includes("javascript:void") || 
         hyperLinkUrl.includes("share.hsforms.com") ||
         blockedSocialMediaLinks.some(function(string) { return hyperLinkUrl.includes(string) })
     )
@@ -243,7 +215,6 @@ const cheerioArticleParser = function(pageUrl, pageContent) {
             parsedHyperLinks.push(linkData)
         }
     })
-
     return parsedHyperLinks
 }
 
@@ -352,8 +323,6 @@ const saveUniqueExtLink = async(title, text, rel, article_link, lastmod, domainI
 const getpageContent = async(url, noOfTries) => {
     if (isNaN(noOfTries) || noOfTries < 1)
         noOfTries = 5
-
-
     var error = null
     for (let i = 0; i < noOfTries; i++) {
         try {
@@ -369,4 +338,4 @@ const getpageContent = async(url, noOfTries) => {
 }
 
 
-// scrapeSitemap('https://renovate.home.blog/sitemap.xml', '5f3ea8fd0be8d22e8c0d0345')
+scrapeSitemap('https://startuptalky.com/sitemap-tags.xml', '5f3fe69077401f42c04928a0')

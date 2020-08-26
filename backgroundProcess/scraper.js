@@ -6,7 +6,7 @@ const snooze = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 (async() => {
     try {
-        const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/test'
+        const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/scrapper'
         const con = await mongoose.connect(mongoUri, {
             useFindAndModify: false,
             useNewUrlParser: true,
@@ -28,14 +28,14 @@ const snooze = ms => new Promise(resolve => setTimeout(resolve, ms));
 class scrapeWorkerController {
     constructor(maxPromisesCount = 4) {
         this.maxPromisesCount = maxPromisesCount
-        this.domainIdsBeingScraped = []
+        this.domainSitemapsBeingScraped = []
     }
 
     async parentMessageHandler(message) {
         var messageCode = message[0]
 
         if (messageCode === 0)
-            process.send([process.pid, 0, this.domainIdsBeingScraped])
+            process.send([process.pid, 0, this.domainSitemapsBeingScraped])
         else if (messageCode === 1)
             this.scrape(message[1])
         else
@@ -43,10 +43,10 @@ class scrapeWorkerController {
     }
 
     async scrape([domainId, domainSitemap]) {
-        if (!this.domainIdsBeingScraped.includes(domainId)
-            //  && this.domainIdsBeingScraped.length >= this.maxPromisesCount
+        if (!this.domainSitemapsBeingScraped.includes(domainSitemap) &&
+            this.domainSitemapsBeingScraped.length < this.maxPromisesCount
         ) {
-            this.domainIdsBeingScraped.push(domainId)
+            this.domainSitemapsBeingScraped.push(domainSitemap)
             console.log('here')
             await Promise.race([scrapeModule.scrapeSitemap(domainSitemap, domainId),
                 new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3600000))
@@ -54,13 +54,13 @@ class scrapeWorkerController {
                 console.error(`crawlWorker[${process.pid}]: Scrapping ${ domainSitemap } failed due to: ${ err }`)
             })
 
-            var index = this.domainIdsBeingScraped.indexOf(domainId)
+            var index = this.domainSitemapsBeingScraped.indexOf(domainId)
             if (index != -1) {
-                console.log(`crawlWorker[${process.pid}]: Removing ${domainId} from scrapelist: ${this.domainIdsBeingScraped}`)
-                this.domainIdsBeingScraped = this.domainIdsBeingScraped.splice(index, 1)
+                console.log(`crawlWorker[${process.pid}]: Removing ${domainId} from scrapelist: ${this.domainSitemapsBeingScraped}`)
+                this.domainSitemapsBeingScraped = this.domainSitemapsBeingScraped.splice(index, 1)
             }
         }
-        process.send([process.pid, 1, domainId])
+        process.send([process.pid, 1, domainSitemap])
     }
 }
 

@@ -9,7 +9,7 @@ const snooze = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 (async() => {
     try {
-        const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/test'
+        const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/scrapper'
         const con = await mongoose.connect(mongoUri, {
             useFindAndModify: false,
             useNewUrlParser: true,
@@ -31,7 +31,7 @@ const snooze = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 class backgroundProcessController {
 
-    constructor(workerCount = 4) {
+    constructor(workerCount = 3) {
         this.autoCrawlTasks = []
         this.crawlWorkers = {}
         this.currentlyCrawling = []
@@ -56,21 +56,21 @@ class backgroundProcessController {
 
     async enqueueCrawlTask([domainId, domainSitemap]) {
         try {
-            if (this.currentlyCrawling.includes(domainId)) return false;
+            if (this.currentlyCrawling.includes(domainSitemap)) return false;
 
             var lowTaskedPid = Object.keys(this.crawlWorkers)[0]
             while (true) {
                 for (let pid in this.crawlWorkers) {
-                    if (this.crawlWorkers[pid][2].length <= this.crawlWorkers[lowTaskedPid][2])
+                    if (this.crawlWorkers[pid][2].length <= this.crawlWorkers[lowTaskedPid][2].length)
                         lowTaskedPid = pid
                 }
-                if (this.crawlWorkers[lowTaskedPid][2].length < 4) { break }
+                if (this.crawlWorkers[lowTaskedPid][2].length < 3) { break }
                 console.log(`backgroundProcess - enqueueCrawlTask - all workers are busy, sleeping for 15 seconds`)
                 await snooze(15000)
             }
-            if (this.currentlyCrawling.includes(domainId)) return false;
+            if (this.currentlyCrawling.includes(domainSitemap)) return false;
 
-            this.currentlyCrawling.push(domainId)
+            this.currentlyCrawling.push(domainSitemap)
             this.crawlWorkers[lowTaskedPid][0].send([1, [domainId, domainSitemap]])
 
             console.log(`backgroundProcess - enqueueCrawlTask - queued ${domainSitemap} to crawlWorker - ${lowTaskedPid}`)
@@ -157,6 +157,7 @@ class backgroundProcessController {
 
     autoCrawlLoop = async() => {
         while (true) {
+            await snooze(30000)
             try {
                 var startTime = Date.now()
                 if (this.autoCrawlTasks.length === 0) {
@@ -178,7 +179,6 @@ class backgroundProcessController {
             } catch (err) {
                 console.error("backgroundProcess - autoCrawlLoop Error : ", err)
             }
-            await snooze(30000)
         }
 
     }

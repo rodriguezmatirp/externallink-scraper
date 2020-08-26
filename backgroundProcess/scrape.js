@@ -8,6 +8,8 @@ const externalLinkSchema = require('../model/externalLink')
 const axios = require('axios')
 const cheerio = require('cheerio');
 
+const snooze = ms => new Promise(resolve => setTimeout(resolve, ms));
+
 const blockedSocialMediaLinks = [
     "facebook.com",
     "twitter.com",
@@ -86,6 +88,7 @@ module.exports.scrapeSitemap = scrapeSitemap = async(sitemapUrl, domainId, paren
             if (shouldScrape) {
                 try {
                     await scrapeSitemap(sitemapObj[0], domainId, sitemapDBData._id, sitemapObj[1])
+                    await snooze(50)
                 } catch (err) {
                     console.error(`ScrapeSitemap Error: Blocking ${articleObj[0]} from sitemapID: ${sitemapDBData._id} : ${err}`)
                     await sitemapSchema.findOneAndUpdate({ sitemapLink: sitemapObj[0] }, { blocked: true })
@@ -108,6 +111,7 @@ module.exports.scrapeSitemap = scrapeSitemap = async(sitemapUrl, domainId, paren
             if (shouldScrape) {
                 try {
                     await scrapeArticle(articleObj[0], domainId, sitemapDBData._id, articleObj[1])
+                    await snooze(50)
                 } catch (err) {
                     console.error(`ScrapeArticle Error: Blocking ${articleObj[0]} from sitemapID: ${sitemapDBData._id} : ${err}`)
                     await articleSchema.findOneAndUpdate({ articleLink: articleObj[0] }, { blocked: true })

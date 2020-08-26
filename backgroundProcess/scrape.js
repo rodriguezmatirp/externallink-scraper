@@ -20,7 +20,31 @@ const blockedSocialMediaLinks = [
     "instagram.com",
     "amazon.com",
     "amazon.in",
-    "flipkart.com"
+    "flipkart.com",
+    'https://in.makers.yahoo.com',
+    'https://plus.sandbox.google.com',
+    'http://www.shutterstock.com',
+    'https://t.co',
+    'https://play.google.com',
+    'https://en.wikipedia.org',
+    'https://medium.com',
+    'https://itunes.apple.com',
+    'http://t.co',
+    'https://appsto.re',
+    'https://www.shutterstock.com',
+    'https://www.bloomberg.com',
+    'https://www.flickr.com',
+    'http://amzn.to',
+    'http://www.bbc.com',
+    'https://www.entrepreneur.com',
+    'http://techcrunch.com',
+    'https://www.nytimes.com',
+    'https://hbr.org',
+    'http://fortune.com',
+    'https://pixabay.com',
+    'http://en.wikipedia.org',
+    'https://www.ted.com',
+    'https://angel.co'
 ]
 
 

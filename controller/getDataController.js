@@ -90,9 +90,8 @@ module.exports.get = async(link, type, start, end, skip, limit) => {
 
         filteredExternalLinks.sort((objA, objB) => (objA.lastModified < objB.lastModified) ? 1 : -1)
 
-        // 
-        // filteredExternalLinks = filteredExternalLinks.slice(skip)
-        // filteredExternalLinks = filteredExternalLinks.slice(0, limit)
+        filteredExternalLinks = filteredExternalLinks.slice(skip)
+        filteredExternalLinks = filteredExternalLinks.slice(0, limit)
 
         return { externalLinks: filteredExternalLinks, totalCount: totalArticleLength }
     } catch (error) {

@@ -366,4 +366,4 @@ const getpageContent = async(url, noOfTries) => {
 }
 
 
-scrapeSitemap('https://startuptalky.com/sitemap-tags.xml', '5f3fe69077401f42c04928a0')
+// scrapeSitemap('https://startuptalky.com/sitemap-tags.xml', '5f3fe69077401f42c04928a0')

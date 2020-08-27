@@ -35,6 +35,7 @@ module.exports.getAllDomains = async() => {
 
 module.exports.deleteLink = async(url) => {
     try {
+        // console.log(url)
         var domain = await domainSchema.findOne({ domainSitemap: url })
         await linksSchema.deleteMany({ domainId: domain._id })
         await articleSchema.deleteMany({ domainId: domain._id })
@@ -43,7 +44,7 @@ module.exports.deleteLink = async(url) => {
         await externalLinkSchema.deleteMany({ domainId: domain._id })
         return { status: true }
     } catch (err) {
-        console.log(err)
+        console.error(err)
         return { status: false, err: err }
     }
 }

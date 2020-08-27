@@ -20,6 +20,7 @@ const linksSchema = new mongoose.Schema({
     externalLink: { type: String, required: true, minlength: 4 },
     rel: { type: String, required: true, default: "dofollow" },
     anchorText: { type: String, trim: true, default: "" },
+    isHidden: { type: Boolean, default: false },
     status: { type: Boolean, default: false }
 }, {
     timestamps: true

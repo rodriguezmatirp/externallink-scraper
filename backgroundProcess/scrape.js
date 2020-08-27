@@ -10,7 +10,7 @@ const cheerio = require('cheerio');
 
 const snooze = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-const blockedSocialMediaLinks = [
+const blockedDomains = [
     "facebook.com",
     "twitter.com",
     "linkedin.com",
@@ -44,7 +44,8 @@ const blockedSocialMediaLinks = [
     'https://pixabay.com',
     'http://en.wikipedia.org',
     'https://www.ted.com',
-    'https://angel.co'
+    'https://angel.co',
+    'docs.google.com'
 ]
 
 
@@ -196,10 +197,9 @@ const cheerioSitemapParser = function(pageContent) {
 
 const validateUrl = (pageDomain, hyperLinkUrl) => {
 
-
     if (hyperLinkUrl.includes(pageDomain) || // Filter links to same domain
         hyperLinkUrl.includes("share.hsforms.com") ||
-        blockedSocialMediaLinks.some(function(string) { return hyperLinkUrl.includes(string) })
+        blockedDomains.some(function(string) { return hyperLinkUrl.includes(string) })
     )
         return false
     return true
@@ -364,6 +364,3 @@ const getpageContent = async(url, noOfTries) => {
     }
     throw error;
 }
-
-
-// scrapeSitemap('https://startuptalky.com/sitemap-tags.xml', '5f3fe69077401f42c04928a0')

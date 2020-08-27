@@ -9,27 +9,36 @@ var getDataController = require('../controller/getDataController')
 var externalLinkController = require('../controller/externalLinkController')
 
 var domainSchema = require('../model/domain')
-    // var scrapper = require('../backgroundProcess/scrapper')
 const { allAuth } = require("../middlewares/auth");
 
 //Multi Processing - Scrapping sitemaps by queueing 
 const process = require('process')
 const child_process = require('child_process');
+const monitorCrawlers = { crawlWorkers: [], crawlTasks: [] }
+
+const snooze = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 backgroundProcess = child_process.fork('./backgroundProcess/backgroundProcess.js')
 
-backgroundProcess.on('message', (m) => { console.log("Background Process message : ", m) })
+backgroundProcess.on('message', (message) => {
+    //console.log("Background Process message : ", message)
+    const messageCode = message[0]
+    const messageArgs = message.slice(1)
+    if (messageCode === 2) {
+        const statusDict = messageArgs[0]
+        monitorCrawlers['crawlWorkers'] = statusDict['crawlWorkers']
+        monitorCrawlers['crawlTasks'] = statusDict['crawlTasks']
+    }
+})
 
-process.on('exit', (code) => { backgroundProcess.kill('SIGTERM') })
-
+process.on('exit', (code) => { backgroundProcess.kill(15) })
 
 
 router.get("/crawlAll", async(req, res, next) => {
     const domainsObj = await domainSchema.find({ blocked: false }, { domainSitemap: 1 });
     var domainsList = []
-    for (let domainObj of domainsObj) {
+    for (let domainObj of domainsObj)
         domainsList.push(domainObj.domainSitemap)
-    }
     backgroundProcess.send([1, domainsList])
     res.status(200)
 })
@@ -43,7 +52,11 @@ router.post('/crawl', async(req, res, next) => {
     res.status(200).json({ result: "Queued the crawl job" })
 })
 
-
+router.get('/crawlList', async(req, res, next) => {
+    backgroundProcess.send([2])
+    await snooze(1000)
+    res.status(200).json({ monitorCrawlers })
+})
 
 router.post('/restrict', async(req, res, next) => {
     var url = req.query.link

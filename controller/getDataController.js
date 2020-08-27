@@ -1,14 +1,12 @@
 const mongoose = require("mongoose");
 const articleSchema = require("../model/article");
-const sitemapSchema = require("../model/sitemap");
 const linksSchema = require('../model/links')
 const domainSchema = require('../model/domain')
-const restrictedSchema = require('../model/restricted')
 
 module.exports.get = async(link, type, start, end, skip, limit) => {
     try {
         const articleCondition = {}
-        const linksCondition = { 'articleId': [] }
+        const linksCondition = { 'articleId': [], isHidden: false }
 
         skip = Number(skip) ? Number(skip) : 0
         limit = Number(limit) ? Number(limit) : 20
@@ -21,79 +19,52 @@ module.exports.get = async(link, type, start, end, skip, limit) => {
             articleCondition["domainId"] = domain._id
         }
 
-        let start_flag = (start.getTime() === start.getTime())
-        let end_flag = (end.getTime() === end.getTime())
-
-        if (start_flag || end_flag) {
+        if (!isNaN(start.getTime()) || !isNaN(end.getTime())) {
             articleCondition["lastModified"] = {}
-            if (start_flag) {
+            if (!isNaN(start.getTime()))
                 articleCondition["lastModified"]["$gte"] = start
-            }
-            if (end_flag) {
+            if (!isNaN(end.getTime()))
                 articleCondition["lastModified"]["$lte"] = end
-            }
         }
 
         if (type == 'dofollow' || type == 'nofollow')
             linksCondition['rel'] = type
 
-        var articles = await articleSchema.find(articleCondition)
-
         const articleObjs = {}
+        const articles = await articleSchema.find(articleCondition)
 
         articles.forEach((articleObj) => {
             linksCondition.articleId.push(articleObj._id)
             articleObjs[articleObj._id] = [articleObj.articleLink, articleObj.lastModified]
         })
 
+        const linksCount = await linksSchema.find(linksCondition).count()
 
-        const externalLinkObjs = await linksSchema.find(linksCondition)
+        const externalLinks = await linksSchema.find(linksCondition, { isHidden: false })
+            .skip(skip)
+            .limit(limit)
 
-        var filteredExternalLinks = []
+        var propertyAddedExternalLinks = []
 
-        // Filter process
-        const filterForAll = [],
-            filterExceptStalky = []
-
-        var restrict = await restrictedSchema.find()
-
-        restrict.forEach((data) => {
-            if (data.restricted_type === "EST") {
-                filterExceptStalky.push(data.restricted_link)
-            } else {
-                filterForAll.push(data.restricted_link)
-            }
-        })
-
-        for (let externalLinkObj of externalLinkObjs) {
+        for (let externalLinkObj of externalLinks) {
 
             const [articleLink, lastModified] = articleObjs[externalLinkObj['articleId']]
 
-            var shouldInclude = !filterForAll.some(restricted => externalLinkObj['externalLink'].includes(restricted))
-
-            if (shouldInclude && !articleLink.includes("startuptalky.com/"))
-                shouldInclude = !filterExceptStalky.some(restricted => externalLinkObj['externalLink'].includes(restricted))
-
-            if (shouldInclude)
-                filteredExternalLinks.push({
-                    '_id': externalLinkObj['_id'],
-                    'articleLink': articleLink,
-                    'lastModified': lastModified,
-                    'externalLink': externalLinkObj['externalLink'],
-                    'anchorText': externalLinkObj['anchorText'],
-                    'status': externalLinkObj['status'],
-                    'rel': externalLinkObj['rel']
-                })
+            propertyAddedExternalLinks.push({
+                '_id': externalLinkObj['_id'],
+                'articleLink': articleLink,
+                'lastModified': lastModified,
+                'externalLink': externalLinkObj['externalLink'],
+                'anchorText': externalLinkObj['anchorText'],
+                'status': externalLinkObj['status'],
+                'rel': externalLinkObj['rel']
+            })
         }
 
-        const totalArticleLength = filteredExternalLinks.length
+        propertyAddedExternalLinks.sort((objA, objB) => (objA.lastModified < objB.lastModified) ? -1 : 1)
 
-        filteredExternalLinks.sort((objA, objB) => (objA.lastModified < objB.lastModified) ? 1 : -1)
+        return { externalLinks: propertyAddedExternalLinks, totalCount: linksCount }
 
-        filteredExternalLinks = filteredExternalLinks.slice(skip)
-        filteredExternalLinks = filteredExternalLinks.slice(0, limit)
-
-        return { externalLinks: filteredExternalLinks, totalCount: totalArticleLength }
     } catch (error) {
         console.error(error)
     }

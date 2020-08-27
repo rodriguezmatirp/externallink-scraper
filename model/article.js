@@ -18,10 +18,6 @@ const articleSchema = new mongoose.Schema({
     sitemapId: { type: mongoose.Schema.Types.ObjectId, required: true },
     blocked: { type: Boolean, default: false },
     articleLink: { type: String, required: true, unique: true },
-    //externalLinkIds: [{
-    //    $id: { type: mongoose.Schema.Types.ObjectId, required: true, unique: true },
-    //    $ref: { type: String, required: true }
-    //}],
     lastChecked: { type: Date, required: true, default: Date.now() },
     lastModified: { type: Date, required: true }
 }, {

@@ -8,7 +8,6 @@ const sitemapSchema = require('../model/sitemap')
 module.exports.add_ = async(url, type) => {
     try {
         const main = await new restrictedSchema({ restricted_link: url, restricted_type: type }).save()
-            // console.log(main)
 
         return { result: main }
     } catch (e) {

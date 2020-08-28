@@ -63,8 +63,10 @@ class backgroundProcess {
     workerCheck = async() => {
         if (this.maxWorkerCount > Object.keys(this.crawlWorkers).length && this.crawlTasks.length > 0) {
             const [domainId, domainSitemap] = this.crawlTasks.shift()
-            this.createCrawlWorker([domainId, domainSitemap])
-            console.log(`backgroundProcess - Created a worker for ${domainSitemap}`)
+            if (this.crawlWorkers[domainSitemap] === undefined) {
+                this.createCrawlWorker([domainId, domainSitemap])
+                console.log(`backgroundProcess - Created a worker for ${domainSitemap}`)
+            }
         }
         for (let domainSitemap in this.crawlWorkers) {
             if (Date.now() - this.crawlWorkers[domainSitemap][1] > 1800000) {

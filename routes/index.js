@@ -49,6 +49,7 @@ router.post('/crawl', async(req, res, next) => {
     var url = req.body.url
 
     const domain = await domainSchema.findOne({ domainSitemap: url })
+    await domainSchema.findByIdAndUpdate({ _id: domain._id }, { blocked: false, blockedReason: '' })
 
     backgroundProcess.send([1, [domain.domainSitemap]])
     res.status(200).json({ result: "Queued the crawl job" })

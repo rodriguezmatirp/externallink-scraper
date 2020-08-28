@@ -19,7 +19,7 @@ const timedPromiseLoop = (functionObj, waitTime, errorString = "Error: ") => {
 
 (async() => {
     try {
-        const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/scraper'
+        const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/test'
         const con = await mongoose.connect(mongoUri, {
             useFindAndModify: false,
             useNewUrlParser: true,
@@ -47,7 +47,7 @@ class backgroundProcess {
         this.crawlWorkers = {}
         this.maxWorkerCount = maxWorkerCount
         timedPromiseLoop(this.workerCheck, 5000, "backgroundProcess - workerCheck Error")
-        timedPromiseLoop(this.addCrawlTask, 120000, "backgroundProcess - addCrawlTask Error")
+            // timedPromiseLoop(this.addCrawlTask, 120000, "backgroundProcess - addCrawlTask Error")
         timedPromiseLoop(this.filterExternalLinks, 600000, "backgroundProcess - addCrawlTask Error")
     }
 

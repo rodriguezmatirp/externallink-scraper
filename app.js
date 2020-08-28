@@ -15,7 +15,7 @@ const tunnel = require('tunnel-ssh')
 var app = express();
 db = async() => {
     try {
-        const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/scraper'
+        const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/test'
         const con = await mongoose.connect(mongoUri, {
             useFindAndModify: false,
             useNewUrlParser: true,

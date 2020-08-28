@@ -10,7 +10,7 @@ const domainSitemap = args.domainSitemap;
 
 (async() => {
     try {
-        const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/scraper'
+        const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/test'
         const con = await mongoose.connect(mongoUri, {
             useFindAndModify: false,
             useNewUrlParser: true,
@@ -34,7 +34,7 @@ const domainSitemap = args.domainSitemap;
         new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1800000))
     ]).catch(async(err) => {
         if (err.message !== 'timeout') {
-            await domains.findByIdAndUpdate({ _id: domainId }, { blocked: true })
+            await domains.findByIdAndUpdate({ _id: domainId }, { blocked: true, blockedReason: err.message })
         }
         console.error(`crawlWorker[${domainSitemap}]: Scrapping ${domainSitemap} failed due to: ${err}`)
     })

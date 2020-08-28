@@ -185,5 +185,9 @@ process.on('message', async(message) => {
     await backgroundProcessObj.parentMessageHandler(message)
 })
 process.on('exit', (code) => {
+    for (let workerKey in backgroundProcessObj.crawlWorkers) {
+        backgroundProcessObj.crawlWorkers[workerKey][0].kill(15)
+        console.log(`backgroundProcess - Killed crawlWorkers[${workerKey}]`)
+    }
     console.log("backgroundProcess died with code : ", code)
 })

@@ -10,7 +10,7 @@ const domainSitemap = args.domainSitemap;
 
 (async() => {
     try {
-        const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/test'
+        const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/scraper'
         const con = await mongoose.connect(mongoUri, {
             useFindAndModify: false,
             useNewUrlParser: true,

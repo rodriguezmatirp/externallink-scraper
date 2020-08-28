@@ -44,7 +44,6 @@ class backgroundProcess {
         this.crawlTasks = []
         this.autoCrawlTasks = []
         this.filterLimit = 5000
-            //this.filterWorkerEnabled = true
         this.crawlWorkers = {}
         this.maxWorkerCount = maxWorkerCount
         timedPromiseLoop(this.workerCheck, 5000, "backgroundProcess - workerCheck Error")

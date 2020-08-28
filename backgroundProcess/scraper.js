@@ -33,7 +33,9 @@ const domainSitemap = args.domainSitemap;
     await Promise.race([scrapeModule.scrapeSitemap(domainSitemap, domainId),
         new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1800000))
     ]).catch(async(err) => {
-        await domains.findByIdAndUpdate({ _id: domainId }, { blocked: true })
+        if (err.message !== 'timeout') {
+            await domains.findByIdAndUpdate({ _id: domainId }, { blocked: true })
+        }
         console.error(`crawlWorker[${domainSitemap}]: Scrapping ${domainSitemap} failed due to: ${err}`)
     })
     process.exit(0)

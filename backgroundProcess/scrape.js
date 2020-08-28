@@ -135,8 +135,10 @@ const cheerioArticleParser = function(pageUrl, pageContent) {
             let anchorText = $(this).text();
 
             while (/<img.*>/.test(anchorText) === true) {
-                const altText = /<img.*? alt=["'](.*?)["'].*>/g.exec(anchorText)[1];
-                anchorText = anchorText.replace(/<img.*?alt=["'](.*?)["'].*>/, ` ${altText} `)
+                const altTextObj = /<img.*? alt=["'](.*?)["'].*>/g.exec(anchorText);
+                if (altTextObj[1] === undefined || altTextObj[1] === null)
+                    break
+                anchorText = anchorText.replace(/<img.*?alt=["'](.*?)["'].*>/, ` ${altTextObj[1]} `)
             }
             anchorText = anchorText.trim()
 
@@ -312,5 +314,3 @@ const saveUniqueExtLink = async(title, text, rel, article_link, lastmod, domainI
 }
 
 module.exports.scrapeSitemap = scrapeSitemap
-
-// scrapeSitemap('https://renovate.home.blog/sitemap.xml', '5f3fd782a5a077220816bf92')

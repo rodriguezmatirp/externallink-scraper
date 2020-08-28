@@ -1,12 +1,12 @@
-const mongoose = require("mongoose");
+require("mongoose");
 const articleSchema = require("../model/article");
 const linksSchema = require('../model/links')
 const domainSchema = require('../model/domain')
 
-module.exports.get = async(link, type, start, end, skip, limit) => {
+module.exports.get = async (link, type, start, end, skip, limit) => {
     try {
         const articleCondition = {}
-        const linksCondition = { 'articleId': [], isHidden: false }
+        const linksCondition = {'articleId': [], isHidden: false}
 
         skip = Number(skip) ? Number(skip) : 0
         limit = Number(limit) ? Number(limit) : 20
@@ -15,7 +15,7 @@ module.exports.get = async(link, type, start, end, skip, limit) => {
         end = await incrementDate(end, 1)
 
         if (link) {
-            const domain = await domainSchema.findOne({ domainSitemap: link })
+            const domain = await domainSchema.findOne({domainSitemap: link})
             articleCondition["domainId"] = domain._id
         }
 
@@ -27,7 +27,7 @@ module.exports.get = async(link, type, start, end, skip, limit) => {
                 articleCondition["lastModified"]["$lte"] = end
         }
 
-        if (type == 'dofollow' || type == 'nofollow')
+        if (type === 'dofollow' || type === 'nofollow')
             linksCondition['rel'] = type
 
         const articleObjs = {}
@@ -40,11 +40,11 @@ module.exports.get = async(link, type, start, end, skip, limit) => {
 
         const linksCount = await linksSchema.find(linksCondition).count()
 
-        const externalLinks = await linksSchema.find(linksCondition, { isHidden: false })
+        const externalLinks = await linksSchema.find(linksCondition, {isHidden: false})
             .skip(skip)
             .limit(limit)
 
-        var propertyAddedExternalLinks = []
+        const propertyAddedExternalLinks = []
 
         for (let externalLinkObj of externalLinks) {
 
@@ -63,7 +63,7 @@ module.exports.get = async(link, type, start, end, skip, limit) => {
 
         propertyAddedExternalLinks.sort((objA, objB) => (objA.lastModified < objB.lastModified) ? -1 : 1)
 
-        return { externalLinks: propertyAddedExternalLinks, totalCount: linksCount }
+        return {externalLinks: propertyAddedExternalLinks, totalCount: linksCount}
 
     } catch (error) {
         console.error(error)
@@ -71,10 +71,7 @@ module.exports.get = async(link, type, start, end, skip, limit) => {
 }
 
 
-incrementDate = async(dateInput, increment) => {
-    var dateFormatTotime = new Date(dateInput);
-    var increasedDate = new Date(
-        dateFormatTotime.getTime() + increment * 86400000
-    );
-    return increasedDate;
+incrementDate = async (dateInput, increment) => {
+    const dateFormatToTime = new Date(dateInput);
+    return new Date(dateFormatToTime.getTime() + increment * 86400000);
 }

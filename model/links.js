@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 /*
 LinksSchema:
         Schema which holds the data of externalLinks that is scraped from 
@@ -12,16 +13,14 @@ LinksSchema:
 
 */
 
-const mongoose = require("mongoose");
-
 const linksSchema = new mongoose.Schema({
-    domainId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'domains' },
-    articleId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'articles' },
-    externalLink: { type: String, required: true, minlength: 4 },
-    rel: { type: String, required: true, default: "dofollow" },
-    anchorText: { type: String, trim: true, default: "" },
-    isHidden: { type: Boolean, default: false },
-    status: { type: Boolean, default: false }
+    domainId: {type: mongoose.Schema.Types.ObjectId, required: true, ref: 'domains'},
+    articleId: {type: mongoose.Schema.Types.ObjectId, required: true, ref: 'articles'},
+    externalLink: {type: String, required: true, minlength: 4},
+    rel: {type: String, required: true, default: "dofollow"},
+    anchorText: {type: String, trim: true, default: ""},
+    isHidden: {type: Boolean, default: false},
+    status: {type: Boolean, default: false}
 }, {
     timestamps: true
 });

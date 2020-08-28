@@ -1,13 +1,12 @@
 const mongoose = require('mongoose')
 const scrapeModule = require('../backgroundProcess/scrape.js');
+const domains = require('../model/domain')
 
-const snooze = ms => new Promise(resolve => setTimeout(resolve, ms));
+const yargs = require('yargs');
 
-const args = require('yargs').argv;
-
-const domainSitemap = args.sitemap;
+const args = yargs.argv
 const domainId = args.domainId;
-console.log(`DomainName : ${domainSitemap}\nDomainId : ${domainId}`);
+const domainSitemap = args.domainSitemap;
 
 (async() => {
     try {
@@ -30,12 +29,12 @@ console.log(`DomainName : ${domainSitemap}\nDomainId : ${domainId}`);
 })();
 
 
-
 (async() => {
     await Promise.race([scrapeModule.scrapeSitemap(domainSitemap, domainId),
         new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1800000))
-    ]).catch(function(err) {
-        console.error(`crawlWorker[${domainSitemap}]: Scrapping ${ domainSitemap } failed due to: ${ err }`)
+    ]).catch(async(err) => {
+        await domains.findByIdAndUpdate({ _id: domainId }, { blocked: true })
+        console.error(`crawlWorker[${domainSitemap}]: Scrapping ${domainSitemap} failed due to: ${err}`)
     })
     process.exit(0)
 })();

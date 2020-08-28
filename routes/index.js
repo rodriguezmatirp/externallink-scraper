@@ -31,7 +31,9 @@ backgroundProcess.on('message', (message) => {
     }
 })
 
-process.on('exit', (code) => { backgroundProcess.kill(15) })
+process.on('exit', (code) => {
+    backgroundProcess.kill(15)
+})
 
 
 router.get("/crawlAll", async(req, res, next) => {
@@ -54,7 +56,7 @@ router.post('/crawl', async(req, res, next) => {
 
 router.get('/crawlList', async(req, res, next) => {
     backgroundProcess.send([2])
-    await snooze(1000)
+    await snooze(500)
     res.status(200).json({ monitorCrawlers })
 })
 
@@ -201,7 +203,6 @@ router.get('/verify', async(req, res, next) => {
     const response = await externalLinkController.status(link, status)
     res.status(200).json(response)
 })
-
 
 
 module.exports = router;

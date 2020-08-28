@@ -1,89 +1,82 @@
-const mongoose = require('mongoose')
+require('mongoose')
 const externalLinkSchema = require('../model/externalLink')
-const path = require('path')
 const ObjectsToCsv = require('objects-to-csv')
 
-const queryArgsParser = function(start, end, skip, limit, sort, type, showOnly) {
+const queryArgsParser = function (start, end, sort, type, showOnly) {
     // Input Sanitization
     sort = Number(sort) ? Number(sort) : -1
-    skip = Number(skip) ? Number(skip) : 0
-    limit = Number(limit) ? Number(limit) : 20
 
-    var findCondition = {}
-    var sortCondition = {}
+    const findCondition = {};
+    const sortCondition = {};
 
     start = new Date(start)
     end = new Date(end)
     end = incrementDate(end, 1)
 
-    let start_flag = (start.getTime() === start.getTime())
-    let end_flag = (end.getTime() === end.getTime())
-
-    if (start_flag || end_flag) {
+    if (!isNaN(start.getTime()) || !isNaN(end.getTime())) {
         findCondition["lastmod"] = {}
-        if (start_flag)
+        if (!isNaN(start.getTime()))
             findCondition["lastmod"]["$gte"] = start
 
-        if (end_flag)
+        if (!isNaN(end.getTime()))
             findCondition["lastmod"]["$lte"] = end
     }
 
     if (type) {
-        if (type == 'websiteCount')
+        if (type === 'websiteCount')
             sortCondition['externalLinkCount'] = sort
-        else if (type == 'dateWise')
+        else if (type === 'dateWise')
             sortCondition['createdAt'] = sort
     }
 
     if (showOnly) {
-        if (showOnly == 'notVerified')
+        if (showOnly === 'notVerified')
             findCondition['status'] = false
-        else if (showOnly == 'verified')
+        else if (showOnly === 'verified')
             findCondition['status'] = true
     }
 
-    return [findCondition, sortCondition, skip, limit]
+    return [findCondition, sortCondition]
 }
 
 
-module.exports.getWithLimit = async(start, end, skip, limit, sort, type, showOnly) => {
-
+module.exports.getWithLimit = async (start, end, skip, limit, sort, type, showOnly) => {
     try {
-        var [findCondition, sortCondition, skip, limit] = queryArgsParser(start, end, skip, limit, sort, type, showOnly)
+        skip = Number(skip) ? Number(skip) : 0
+        limit = Number(limit) ? Number(limit) : 20
+        const [findCondition, sortCondition] = queryArgsParser(start, end, sort, type, showOnly)
 
         // Count used for Pagination in Frontend
-        var entriesCount = await externalLinkSchema
-            .count(findCondition)
+        const entriesCount = await externalLinkSchema
+            .count(findCondition);
 
-        var doc = await externalLinkSchema
+        const doc = await externalLinkSchema
             .find(findCondition)
             .sort(sortCondition)
             .skip(skip)
-            .limit(limit < 1001 ? limit : 1000)
+            .limit(limit < 1001 ? limit : 1000);
 
-        return { result: doc, meta: entriesCount }
+        return {result: doc, meta: entriesCount}
 
 
     } catch (e) {
         console.error(e)
-        return { err: e, status: false }
+        return {err: e, status: false}
     }
 }
 
 
-module.exports.getAsFile = async(start, end, skip, limit, sort, type, showOnly) => {
+module.exports.getAsFile = async (start, end, skip, limit, sort, type, showOnly) => {
+    let tempFilename = '';
+    let dirPath;
     try {
-        var [findCondition, sortCondition, skip, limit] = queryArgsParser(start, end, skip, limit, sort, type, showOnly)
+        const [findCondition, sortCondition] = queryArgsParser(start, end, sort, type, showOnly)
 
-        // Count used for Pagination in Frontend
-        var entriesCount = await externalLinkSchema
-            .count(findCondition)
-
-        var extLinks = await externalLinkSchema
+        const extLinks = await externalLinkSchema
             .find(findCondition)
-            .sort(sortCondition)
+            .sort(sortCondition);
 
-        var tempFilename = "Links-Export"
+        tempFilename = "Links-Export";
 
         if (start && start !== "") {
             tempFilename += "-start_" + start
@@ -101,7 +94,7 @@ module.exports.getAsFile = async(start, end, skip, limit, sort, type, showOnly) 
         let result = []
         result.push(csvHeader)
         for (let extLink of extLinks) {
-            var temp = []
+            const temp = [];
             temp.push(extLink.articleLink)
             temp.push(extLink.externalLink)
             temp.push(extLink.rel)
@@ -109,42 +102,39 @@ module.exports.getAsFile = async(start, end, skip, limit, sort, type, showOnly) 
             temp.push(getFormattedDate(extLink.createdAt))
             temp.push(getFormattedDate(extLink.lastModified))
             temp.push(extLink.externalLinkCount)
-            temp.push(extLink.showOnly ? "Verified" : "Not yet verified")
+            temp.push(extLink.status ? "Verified" : "Not yet verified")
             result.push(temp)
         }
         let csv = new ObjectsToCsv(result)
         await csv.toDisk(tempFilename)
 
-        return { fileName: tempFilename }
+        return {fileName: tempFilename}
     } catch (e) {
         console.error(`Error while saving export file - ${tempFilename} : `, e)
-        return { error: e }
+        return {error: e}
     }
 }
 
-module.exports.status = async(link, check) => {
+module.exports.status = async (link) => {
     try {
-        const doc = await externalLinkSchema.findOne({ externalLink: link })
-        await externalLinkSchema.findOneAndUpdate({ externalLink: link }, { status: !doc.status })
-        return { result: doc }
+        const doc = await externalLinkSchema.findOne({externalLink: link})
+        await externalLinkSchema.findOneAndUpdate({externalLink: link}, {status: !doc.status})
+        return {result: doc}
     } catch (e) {
         console.log(e)
-        return { err: e, status: false }
+        return {err: e, status: false}
     }
 }
 
-const incrementDate = function(dateInput, increment) {
-    var dateFormatTotime = new Date(dateInput);
-    var increasedDate = new Date(
-        dateFormatTotime.getTime() + increment * 86400000
-    );
-    return increasedDate;
+const incrementDate = function (dateInput, increment) {
+    const dateFormatToTime = new Date(dateInput);
+    return new Date(dateFormatToTime.getTime() + increment * 86400000);
 };
 
 const getFormattedDate = (date) => {
-    var todayTime = new Date(date);
-    var day = todayTime.getDate();
-    var month = todayTime.getMonth() + 1;
-    var year = todayTime.getFullYear();
+    const todayTime = new Date(date);
+    const day = todayTime.getDate();
+    const month = todayTime.getMonth() + 1;
+    const year = todayTime.getFullYear();
     return year + "-" + month + "-" + day;
 };

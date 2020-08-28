@@ -1,10 +1,11 @@
+require('mongoose')
 const bcrypt = require("bcryptjs");
 const userSchema = require('../model/user')
 
-module.exports.register = async(req, res) => {
-    let { name, email, password } = req.body;
-    let user = await User.findOne({
-        email: { $regex: `^${email}$`, $options: "i" },
+module.exports.register = async (req, res) => {
+    let {name, email, password} = req.body;
+    let user = await userSchema.findOne({
+        email: {$regex: `^${email}$`, $options: "i"},
     });
     if (user) {
         res.status(400).json({
@@ -26,7 +27,7 @@ module.exports.register = async(req, res) => {
             };
             const salt = await bcrypt.genSalt(10);
             newUser["password"] = await bcrypt.hash(password, salt);
-            user = await User.create(newUser);
+            user = await userSchema.create(newUser);
             let token = user.generateAuthToken();
             res.status(200).header("x-auth-token", token).json({
                 message: "Successfully Registered",
@@ -37,10 +38,10 @@ module.exports.register = async(req, res) => {
     }
 };
 
-module.exports.login = async(req, res) => {
-    let { email, password } = req.body;
-    let user = await User.findOne({
-        email: { $regex: `^${email}$`, $options: "i" },
+module.exports.login = async (req, res) => {
+    let {email, password} = req.body;
+    let user = await userSchema.findOne({
+        email: {$regex: `^${email}$`, $options: "i"},
     });
     if (user) {
         let validPassword = await bcrypt.compare(
@@ -69,10 +70,10 @@ module.exports.login = async(req, res) => {
     }
 };
 
-module.exports.profile = async(req, res) => {
-    let user = await User.findById(req.user.id);
+module.exports.profile = async (req, res) => {
+    let user = await userSchema.findById(req.user.id);
     if (user) {
-        res.status(200).json({ message: "success", error: false, data: user });
+        res.status(200).json({message: "success", error: false, data: user});
     } else {
         res.status(400).json({
             message: "No User found",
@@ -82,23 +83,23 @@ module.exports.profile = async(req, res) => {
     }
 };
 
-module.exports.deleteProfile = async(username) => {
+module.exports.deleteProfile = async (username) => {
     try {
-        const removed = await userSchema.findOneAndDelete({ email: username })
-        return { doc: removed }
+        const removed = await userSchema.findOneAndDelete({email: username})
+        return {doc: removed}
     } catch (e) {
         console.log(e)
-        return { err: e, status: false }
+        return {err: e, status: false}
     }
 }
 
-module.exports.getUsers = async() => {
+module.exports.getUsers = async () => {
     try {
-        const main = await userSchema.find({}).sort({ createdAt: 'desc' })
-            // console.log(main)
-        return { doc: main }
+        const main = await userSchema.find({}).sort({createdAt: 'desc'})
+        // console.log(main)
+        return {doc: main}
     } catch (e) {
         console.log(e)
-        return { err: e, status: false }
+        return {err: e, status: false}
     }
 }

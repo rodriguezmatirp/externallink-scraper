@@ -43,7 +43,10 @@ const blockedDomains = [
     'http://en.wikipedia.org/',
     'https://www.ted.com/',
     'https://angel.co/',
-    'docs.google.com/'
+    'docs.google.com/',
+    'spotify.com/',
+    'reddit.com/',
+    'pinterest.com/'
 ]
 
 

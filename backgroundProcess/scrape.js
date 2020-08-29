@@ -317,5 +317,3 @@ const saveUniqueExtLink = async(title, text, rel, article_link, lastmod, domainI
 }
 
 module.exports.scrapeSitemap = scrapeSitemap
-
-scrapeArticle('https://www.allbusiness.com/big-change-ahead-for-the-seo-business-3876432-1.html', '10983649')

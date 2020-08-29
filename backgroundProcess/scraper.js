@@ -18,7 +18,8 @@ const domainSitemap = args.domainSitemap;
             autoReconnect: true,
             reconnectTries: Number.MAX_VALUE,
             reconnectInterval: 1000,
-            poolSize: 2
+            poolSize: 2,
+            useUnifiedTopology: true
         });
         if (con) {
             console.log(`crawlWorker[${domainSitemap}]: Connected Successful to the Database!`);
@@ -32,7 +33,10 @@ const domainSitemap = args.domainSitemap;
 (async() => {
     await Promise.race([scrapeModule.scrapeSitemap(domainSitemap, domainId),
         new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1800000))
-    ]).catch(async(err) => {
+    ]).then(() => {
+        await domains.findByIdAndUpdate({ _id: domainId }, { blocked: false })
+            //In case if a website runs for less than 30 mins , updatedAt property is updated by modifying blocked property
+    }).catch(async(err) => {
         if (err.message !== 'timeout') {
             await domains.findByIdAndUpdate({ _id: domainId }, { blocked: true, blockedReason: err.message })
         }

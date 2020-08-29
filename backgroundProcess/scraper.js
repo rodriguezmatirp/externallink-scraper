@@ -33,7 +33,7 @@ const domainSitemap = args.domainSitemap;
 (async() => {
     await Promise.race([scrapeModule.scrapeSitemap(domainSitemap, domainId),
         new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1800000))
-    ]).then(() => {
+    ]).then(async() => {
         await domains.findByIdAndUpdate({ _id: domainId }, { blocked: false })
             //In case if a website runs for less than 30 mins , updatedAt property is updated by modifying blocked property
     }).catch(async(err) => {

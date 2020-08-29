@@ -139,7 +139,7 @@ const cheerioArticleParser = function(pageUrl, pageContent) {
 
             while (/<img.*>/.test(anchorText) === true) {
                 const altTextObj = /<img.*? alt=["'](.*?)["'].*>/g.exec(anchorText);
-                if (altTextObj[1] === undefined || altTextObj[1] === null)
+                if (altTextObj === undefined || altTextObj === null)
                     break
                 anchorText = anchorText.replace(/<img.*?alt=["'](.*?)["'].*>/, ` ${altTextObj[1]} `)
             }
@@ -317,3 +317,5 @@ const saveUniqueExtLink = async(title, text, rel, article_link, lastmod, domainI
 }
 
 module.exports.scrapeSitemap = scrapeSitemap
+
+scrapeArticle('https://www.allbusiness.com/big-change-ahead-for-the-seo-business-3876432-1.html', '10983649')

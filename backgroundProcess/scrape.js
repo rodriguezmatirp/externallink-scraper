@@ -201,7 +201,7 @@ const scrapeSitemap = async(sitemapUrl, domainId, parentSitemapId = undefined, l
     }
 
     if (parsedArticleLinks.length > 0) {
-        const articleLinksData = await articleSchema.find({ sitemapId: sitemapDBData._id }, { blocked: false })
+        const articleLinksData = await articleSchema.find({ sitemapId: sitemapDBData._id })
         for (let articleObj of parsedArticleLinks) {
             shouldScrape = true;
             for (let articleDbData of articleLinksData) {
@@ -317,3 +317,5 @@ const saveUniqueExtLink = async(title, text, rel, article_link, lastmod, domainI
 }
 
 module.exports.scrapeSitemap = scrapeSitemap
+
+// scrapeArticle('http://localhost/bs_ci/startups/organization-type/one-person-company', '0947238776')

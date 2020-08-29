@@ -15,9 +15,9 @@ const domainSitemap = args.domainSitemap;
             useFindAndModify: false,
             useNewUrlParser: true,
             useCreateIndex: true,
-            autoReconnect: true,
-            reconnectTries: Number.MAX_VALUE,
-            reconnectInterval: 1000,
+            // autoReconnect: true,
+            // reconnectTries: Number.MAX_VALUE,
+            // reconnectInterval: 1000,
             poolSize: 2,
             useUnifiedTopology: true
         });
@@ -36,6 +36,7 @@ const domainSitemap = args.domainSitemap;
     ]).then(async() => {
         await domains.findByIdAndUpdate({ _id: domainId }, { blocked: false })
             //In case if a website runs for less than 30 mins , updatedAt property is updated by modifying blocked property
+        await domains.findOneAndUpdate({ _id: domainId, websiteCount: 0 }, { blocked: true, blockedReason: 'No articles Found' })
     }).catch(async(err) => {
         if (err.message !== 'timeout') {
             await domains.findByIdAndUpdate({ _id: domainId }, { blocked: true, blockedReason: err.message })

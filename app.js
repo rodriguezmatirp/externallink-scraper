@@ -1,13 +1,13 @@
-var createError = require("http-errors");
-var express = require("express");
-var path = require("path");
-var cookieParser = require("cookie-parser");
-var logger = require("morgan");
-var mongoose = require("mongoose");
-var cors = require("cors");
-var bodyParser = require("body-parser");
-var indexRouter = require("./routes/index");
-var userController = require("./routes/user");
+const createError = require("http-errors");
+const express = require("express");
+const path = require("path");
+const cookieParser = require("cookie-parser");
+const logger = require("morgan");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const indexRouter = require("./routes/index");
+const userController = require("./routes/user");
 const serveIndex = require('serve-index');
 const tunnel = require('tunnel-ssh')
 
@@ -52,7 +52,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 require("./model/user");
 
 
-// const func = require('./controller/scrapper')
 //Routes
 app.use("/", indexRouter);
 app.use("/users", userController);

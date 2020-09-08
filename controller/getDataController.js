@@ -1,77 +1,93 @@
 require("mongoose");
 const articleSchema = require("../model/article");
-const linksSchema = require('../model/links')
-const domainSchema = require('../model/domain')
+const linksSchema = require("../model/links");
+const domainSchema = require("../model/domain");
 
-module.exports.get = async (link, type, start, end, skip, limit) => {
+// Generic get function used for Website wise and Date wise pages
+module.exports.get = async(link, type, start, end, skip, limit) => {
     try {
-        const articleCondition = {}
-        const linksCondition = {'articleId': [], isHidden: false}
+        // Objects to store conditions to filter tha data
+        const articleCondition = {};
+        const linksCondition = { articleId: [], isHidden: false };
 
-        skip = Number(skip) ? Number(skip) : 0
-        limit = Number(limit) ? Number(limit) : 20
-        start = new Date(start)
-        end = new Date(end)
-        end = await incrementDate(end, 1)
+        // Input sanitization
+        skip = Number(skip) ? Number(skip) : 0;
+        limit = Number(limit) ? Number(limit) : 20;
+        start = new Date(start);
+        end = new Date(end);
+        end = await incrementDate(end, 1);
 
+        // For getting a links of a specific domian
         if (link) {
-            const domain = await domainSchema.findOne({domainSitemap: link})
-            articleCondition["domainId"] = domain._id
+            const domain = await domainSchema.findOne({ domainSitemap: link });
+            articleCondition["domainId"] = domain._id;
         }
 
+        // Limit the time scope of the time
         if (!isNaN(start.getTime()) || !isNaN(end.getTime())) {
-            articleCondition["lastModified"] = {}
+            articleCondition["lastModified"] = {};
             if (!isNaN(start.getTime()))
-                articleCondition["lastModified"]["$gte"] = start
-            if (!isNaN(end.getTime()))
-                articleCondition["lastModified"]["$lte"] = end
+                articleCondition["lastModified"]["$gte"] = start;
+            if (!isNaN(end.getTime())) articleCondition["lastModified"]["$lte"] = end;
         }
 
-        if (type === 'dofollow' || type === 'nofollow')
-            linksCondition['rel'] = type
+        // Set the type to filter is specifed else return all
+        if (type === "dofollow" || type === "nofollow")
+            linksCondition["rel"] = type;
 
-        const articleObjs = {}
-        const articles = await articleSchema.find(articleCondition)
+        // Getting the required article objects since limiting and sorting the links is based on that
+        const articleObjs = {};
+        const articles = await articleSchema.find(articleCondition);
 
+        // Store it in a easily accessible format
         articles.forEach((articleObj) => {
-            linksCondition.articleId.push(articleObj._id)
-            articleObjs[articleObj._id] = [articleObj.articleLink, articleObj.lastModified]
-        })
+            linksCondition.articleId.push(articleObj._id);
+            articleObjs[articleObj._id] = [
+                articleObj.articleLink,
+                articleObj.lastModified,
+            ];
+        });
 
-        const linksCount = await linksSchema.find(linksCondition).count()
+        // Get the total links count matching the condition for front-end Pagination
+        const linksCount = await linksSchema.find(linksCondition).count();
 
-        const externalLinks = await linksSchema.find(linksCondition, {isHidden: false})
+        // Get the required count of linksObjects matching the condition
+        const externalLinks = await linksSchema
+            .find(linksCondition, { isHidden: false })
             .skip(skip)
-            .limit(limit)
+            .limit(limit);
 
-        const propertyAddedExternalLinks = []
-
+        // Add the rrequired extra properties
+        const propertyAddedExternalLinks = [];
         for (let externalLinkObj of externalLinks) {
-
-            const [articleLink, lastModified] = articleObjs[externalLinkObj['articleId']]
+            const [articleLink, lastModified] = articleObjs[
+                externalLinkObj["articleId"]
+            ];
 
             propertyAddedExternalLinks.push({
-                '_id': externalLinkObj['_id'],
-                'articleLink': articleLink,
-                'lastModified': lastModified,
-                'externalLink': externalLinkObj['externalLink'],
-                'anchorText': externalLinkObj['anchorText'],
-                'status': externalLinkObj['status'],
-                'rel': externalLinkObj['rel']
-            })
+                _id: externalLinkObj["_id"],
+                articleLink: articleLink,
+                lastModified: lastModified,
+                externalLink: externalLinkObj["externalLink"],
+                anchorText: externalLinkObj["anchorText"],
+                status: externalLinkObj["status"],
+                rel: externalLinkObj["rel"],
+            });
         }
 
-        propertyAddedExternalLinks.sort((objA, objB) => (objA.lastModified < objB.lastModified) ? -1 : 1)
+        // sort based on lastModified
+        propertyAddedExternalLinks.sort((objA, objB) =>
+            objA.lastModified < objB.lastModified ? -1 : 1
+        );
 
-        return {externalLinks: propertyAddedExternalLinks, totalCount: linksCount}
-
+        return { externalLinks: propertyAddedExternalLinks, totalCount: linksCount };
     } catch (error) {
-        console.error(error)
+        console.error(error);
     }
-}
+};
 
-
-incrementDate = async (dateInput, increment) => {
+// Function to increase date by a constant (24hrs  == 86400000ms)
+incrementDate = async(dateInput, increment) => {
     const dateFormatToTime = new Date(dateInput);
     return new Date(dateFormatToTime.getTime() + increment * 86400000);
-}
+};

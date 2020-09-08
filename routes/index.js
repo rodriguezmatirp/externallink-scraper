@@ -20,6 +20,7 @@ const snooze = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 backgroundProcess = child_process.fork('./backgroundProcess/backgroundProcess.js')
 
+// Handle messages from background process
 backgroundProcess.on('message', (message) => {
     //console.log("Background Process message : ", message)
     const messageCode = message[0]
@@ -31,11 +32,13 @@ backgroundProcess.on('message', (message) => {
     }
 })
 
+// Kill background process on exit
 process.on('exit', (code) => {
     backgroundProcess.kill(15)
 })
 
 
+// Add all sitemaps to crawl in background process
 router.get("/crawlAll", async(req, res, next) => {
     const domainsObj = await domainSchema.find({ blocked: false }, { domainSitemap: 1 });
     var domainsList = []
@@ -45,6 +48,7 @@ router.get("/crawlAll", async(req, res, next) => {
     res.status(200)
 })
 
+// Add one sitemap to crawl in background process
 router.post('/crawl', async(req, res, next) => {
     var url = req.body.url
 
@@ -55,12 +59,14 @@ router.post('/crawl', async(req, res, next) => {
     res.status(200).json({ result: "Queued the crawl job" })
 })
 
+// Get data on scheduled tasks and currentlt crawling domains
 router.get('/crawlList', async(req, res, next) => {
     backgroundProcess.send([2])
-    await snooze(500)
+    await snooze(250)
     res.status(200).json({ monitorCrawlers })
 })
 
+// Add a item to restricted schema
 router.post('/restrict', async(req, res, next) => {
     var url = req.query.link
     var options = req.query.options
@@ -72,6 +78,7 @@ router.post('/restrict', async(req, res, next) => {
     }
 })
 
+// Delete a domain from Database
 router.get('/deleteWebsite', async(req, res, next) => {
     const link = req.query.link
     const response = await masterController.deleteLink(link)
@@ -82,6 +89,7 @@ router.get('/deleteWebsite', async(req, res, next) => {
     }
 })
 
+// Delete a restricted string from Database
 router.get('/deleteRestricted', async(req, res, next) => {
     const link = req.query.link
     const type = req.query.type
@@ -93,6 +101,7 @@ router.get('/deleteRestricted', async(req, res, next) => {
     }
 })
 
+// Get items from restricted schema
 router.get('/restrict', async(req, res, next) => {
     const response = await filterController.get()
     if (response.err == null) {
@@ -102,6 +111,7 @@ router.get('/restrict', async(req, res, next) => {
     }
 })
 
+// Get info about all domains, the articles counts etc...
 router.get('/info', async(req, res, next) => {
     const limit = req.query.limit
     const skip = req.query.skip
@@ -115,6 +125,7 @@ router.get('/info', async(req, res, next) => {
     }
 })
 
+// Delete a user profile
 router.get("/deleteProfile", async(req, res, next) => {
     var username = req.query.username
     const response = await userController.deleteProfile(username)
@@ -124,6 +135,8 @@ router.get("/deleteProfile", async(req, res, next) => {
         res.status(200).json(response)
     }
 })
+
+// Get a list of all users
 router.get("/getUsers", async(req, res, next) => {
     const response = await userController.getUsers()
     if (response.err == null) {
@@ -133,17 +146,7 @@ router.get("/getUsers", async(req, res, next) => {
     }
 })
 
-router.get("/status", async(req, res, next) => {
-    var linkId = req.query.linkId
-    var status = req.query.status
-    const response = await statusController.postStatus(linkId, status)
-    if (response.err == null) {
-        res.status(200).json({ doc: response })
-    } else {
-        res.status(400).json(response)
-    }
-})
-
+// Add a sitermap and queue it for scraping
 router.post("/master", async(req, res, next) => {
     const response = await masterController.insert(req);
     if (response.err == null) {
@@ -154,11 +157,13 @@ router.post("/master", async(req, res, next) => {
     }
 });
 
+// Get a list of all domains
 router.get("/master", async(req, res, next) => {
     const response = await masterController.getAllDomains();
     res.status(200).json(response);
 });
 
+// Get the external links based on the parameters
 router.get('/getData', async(req, res, next) => {
     const type = req.query.type
     const link = req.query.link
@@ -171,6 +176,7 @@ router.get('/getData', async(req, res, next) => {
     res.status(200).json({ result: response })
 })
 
+// Get the unique external links based on the parameters
 router.get('/getExtLink', async(req, res, next) => {
     const limit = req.query.limit
     const skip = req.query.skip
@@ -183,6 +189,7 @@ router.get('/getExtLink', async(req, res, next) => {
     res.status(200).json(response)
 })
 
+// Get the unique external links based on the parameters as a File
 router.get('/download', async(req, res, next) => {
     const limit = req.query.limit
     const skip = req.query.skip
@@ -198,6 +205,7 @@ router.get('/download', async(req, res, next) => {
         res.status(400).json({ error: "Unable to generate a file to download" })
 })
 
+// Get the unique external links based on the parameters
 router.get('/verify', async(req, res, next) => {
     const link = req.query.link
     const status = req.query.status

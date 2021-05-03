@@ -15,11 +15,11 @@ Properties:
 */
 
 const sitemapSchema = new mongoose.Schema({
-    domainId: {type: mongoose.Schema.Types.ObjectId, required: true, ref: 'domains'},
-    parentSitemapId: {type: mongoose.Schema.Types.ObjectId, default: undefined},
-    sitemapLink: {type: String, required: true, unique: true},
-    lastChecked: {type: Date, required: true, default: Date.now()},
-    lastModified: {type: Date, required: true}
+    domainId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'domains' },
+    parentSitemapId: { type: mongoose.Schema.Types.ObjectId, default: undefined },
+    sitemapLink: { type: String, required: true, unique: true },
+    lastChecked: { type: Date, required: true, default: Date.now() },
+    lastModified: { type: Date, required: true }
 }, {
     timestamps: true
 });

@@ -2,15 +2,6 @@ require('mongoose')
 const bcrypt = require("bcryptjs");
 const userSchema = require('../model/user')
 
-/* 
-
-NOT TESTED!!
-Legacy code form previous devs!
-Please test before useing 
-
-*/
-
-
 // Register a user and add the respective details to database
 module.exports.register = async(req, res) => {
     let { name, email, password } = req.body;
